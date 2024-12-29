@@ -12,20 +12,21 @@ corner rounding for both the pads and other features. The implementation support
 import gdsfactory as gf
 import gdsfactory.components as gc
 from gdsfactory.typings import LayerSpec
-from shared_utilities import merge_referenced_shapes, smooth_corners, DEFAULT_LAYER
+from ..shared import merge_decorator, smooth_corners, DEFAULT_LAYER
 
 
+@merge_decorator
 @gf.cell
 def _draw_transmon_with_sharp_edges(
-        pad_width: float = 400,
-        pad_height: float = 1000,
-        pads_distance: float = 150,
-        taper_width: float = 45,
-        junction_width: float = 1,
-        junction_gap: float = 3.4,
-        junction_length: float = 10,
-        pad_radius: float = 0,
-        layer: LayerSpec = DEFAULT_LAYER
+    pad_width: float = 400,
+    pad_height: float = 1000,
+    pads_distance: float = 150,
+    taper_width: float = 45,
+    junction_width: float = 1,
+    junction_gap: float = 3.4,
+    junction_length: float = 10,
+    pad_radius: float = 0,
+    layer: LayerSpec = DEFAULT_LAYER,
 ) -> gf.Component:
     """
     Creates a transmon qubit with optionally rounded pads but sharp features elsewhere.
@@ -58,7 +59,7 @@ def _draw_transmon_with_sharp_edges(
         width2=junction_width,
         port_names=("e1", "e2"),
         port_types=("electrical", "electrical"),
-        layer=layer
+        layer=layer,
     )
 
     # Create junction
@@ -69,8 +70,8 @@ def _draw_transmon_with_sharp_edges(
     left_taper = c << taper
     left_junction = c << junction
 
-    left_taper.connect('e1', left_pad.ports['e3'], allow_width_mismatch=True)
-    left_junction.connect('e2', left_taper.ports['e2'], allow_width_mismatch=True)
+    left_taper.connect("e1", left_pad.ports["e3"], allow_width_mismatch=True)
+    left_junction.connect("e2", left_taper.ports["e2"], allow_width_mismatch=True)
 
     # Assemble right side
     right_pad = c << pad
@@ -79,28 +80,28 @@ def _draw_transmon_with_sharp_edges(
     right_taper = c << taper
     right_junction = c << junction
 
-    right_taper.connect('e1', right_pad.ports['e1'], allow_width_mismatch=True)
-    right_junction.connect('e2', right_taper.ports['e2'], allow_width_mismatch=True)
+    right_taper.connect("e1", right_pad.ports["e1"], allow_width_mismatch=True)
+    right_junction.connect("e2", right_taper.ports["e2"], allow_width_mismatch=True)
 
     # Add ports for junction connections
-    c.add_port('left_arm', left_junction.ports['e4'])
-    c.add_port('right_arm', right_junction.ports['e4'])
+    c.add_port("left_arm", left_junction.ports["e4"])
+    c.add_port("right_arm", right_junction.ports["e4"])
 
     return c
 
 
 @gf.cell
 def _draw_transmon_smooth_edges(
-        pad_width: float = 400,
-        pad_height: float = 1000,
-        pads_distance: float = 150,
-        taper_width: float = 45,
-        junction_width: float = 1,
-        junction_gap: float = 3.4,
-        junction_length: float = 10,
-        feature_radius: float = 1.0,
-        pad_radius: float = 50.0,
-        layer: LayerSpec = DEFAULT_LAYER
+    pad_width: float = 400,
+    pad_height: float = 1000,
+    pads_distance: float = 150,
+    taper_width: float = 45,
+    junction_width: float = 1,
+    junction_gap: float = 3.4,
+    junction_length: float = 10,
+    feature_radius: float = 1.0,
+    pad_radius: float = 50.0,
+    layer: LayerSpec = DEFAULT_LAYER,
 ) -> gf.Component:
     """
     Creates a transmon qubit with rounded corners for both pads and other features.
@@ -132,11 +133,10 @@ def _draw_transmon_smooth_edges(
         junction_gap=junction_gap,
         junction_length=junction_length,
         pad_radius=pad_radius,
-        layer=layer
+        layer=layer,
     )
 
     # Apply smoothing to all features
-    transmon = merge_referenced_shapes(transmon, layer=layer)
     transmon = smooth_corners(transmon, radius=feature_radius, layer=layer)
     ref = c << transmon
 
@@ -144,33 +144,34 @@ def _draw_transmon_smooth_edges(
     half_junction = gc.compass((junction_width, feature_radius), layer=layer)
 
     left_ext = c << half_junction
-    left_ext.connect('e2', ref.ports['left_arm'])
+    left_ext.connect("e2", ref.ports["left_arm"])
     left_ext.dmovex(-feature_radius)
 
     right_ext = c << half_junction
-    right_ext.connect('e2', ref.ports['right_arm'])
+    right_ext.connect("e2", ref.ports["right_arm"])
     right_ext.dmovex(feature_radius)
 
     # Add ports for external connections
-    c.add_port('left_arm', left_ext.ports['e4'])
-    c.add_port('right_arm', right_ext.ports['e4'])
+    c.add_port("left_arm", left_ext.ports["e4"])
+    c.add_port("right_arm", right_ext.ports["e4"])
 
     return c
 
 
+@merge_decorator
 @gf.cell
 def draw_transmon(
-        pad_width: float = 400,
-        pad_height: float = 1000,
-        pads_distance: float = 150,
-        taper_width: float = 45,
-        junction_width: float = 1,
-        junction_gap: float = 3.4,
-        junction_length: float = 10,
-        smooth_features: bool = True,
-        feature_radius: float = 10.0,
-        pad_radius: float = 50.0,
-        layer: LayerSpec = DEFAULT_LAYER
+    pad_width: float = 400,
+    pad_height: float = 1000,
+    pads_distance: float = 150,
+    taper_width: float = 45,
+    junction_width: float = 1,
+    junction_gap: float = 3.4,
+    junction_length: float = 10,
+    smooth_features: bool = True,
+    feature_radius: float = 10.0,
+    pad_radius: float = 50.0,
+    layer: LayerSpec = DEFAULT_LAYER,
 ) -> gf.Component:
     """
     Creates a transmon qubit with configurable corner rounding for different features.
@@ -205,7 +206,7 @@ def draw_transmon(
             junction_length=junction_length,
             feature_radius=feature_radius,
             pad_radius=pad_radius,
-            layer=layer
+            layer=layer,
         )
     else:
         transmon = _draw_transmon_with_sharp_edges(
@@ -217,7 +218,7 @@ def draw_transmon(
             junction_gap=junction_gap,
             junction_length=junction_length,
             pad_radius=pad_radius,
-            layer=layer
+            layer=layer,
         )
 
-    return merge_referenced_shapes(transmon, layer=layer)
+    return transmon

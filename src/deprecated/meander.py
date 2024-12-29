@@ -8,18 +8,44 @@ import gdsfactory.components as gc
 import numpy as np
 from itertools import chain
 from gdsfactory.typings import LayerSpec
-from shared_utilities import DEFAULT_LAYER
+from src.drawing.shared.utilities import DEFAULT_LAYER, merge_decorator
+
+# def clean_component(component: gf.Component, layyr) -> gf.Component:
+#     """
+#     Removes overlaps in a given GDS component by performing geometry cleanup.
+#
+#     Args:
+#         component: The GDS component to clean.
+#
+#     Returns:
+#         Component: Cleaned GDS component without overlaps.
+#     """
+#     # Flatten the component to combine all elements into a single polygon set
+#     component.flatten()
+#
+#     # Perform a union operation to merge overlapping geometries
+#     cleaned_component = gf.Component()
+#     merged = gf.boolean(
+#         A=component,
+#         B=None,
+#         operation="or",  # Union operation
+#         layer=gf.LAYER.WG,  # Target layer for cleaned geometries
+#     )
+#     cleaned_component.add_ref(merged)
+#
+#     return cleaned_component
 
 
+@merge_decorator
 @gf.cell
 def meander_euler(
-        wire_width: float = 0.2,
-        height: float = 10,
-        padding_length: float = 3,
-        spacing: float = 3,
-        num_turns: int = 9,
-        radius: float = 1,
-        layer: LayerSpec = DEFAULT_LAYER
+    wire_width: float = 0.2,
+    height: float = 10,
+    padding_length: float = 3,
+    spacing: float = 5,
+    num_turns: int = 9,
+    radius: float = 1,
+    layer: LayerSpec = DEFAULT_LAYER,
 ) -> gf.Component:
     """
     Creates a meandering wire pattern using smooth curves.
@@ -42,30 +68,23 @@ def meander_euler(
         height=height,
         padding_length=padding_length,
         spacing=spacing,
-        num_turns=num_turns
+        num_turns=num_turns,
     )
 
     path = gf.path.smooth(
-        points,
-        radius=radius,
-        bend=gf.path.euler,
-        use_eff=True,
-        npoints=320,
-        p=1
+        points, radius=radius, bend=gf.path.euler, use_eff=True, npoints=720, p=1
     )
 
     cross_section = gf.cross_section.strip(width=wire_width, layer=layer)
     waveguide = gf.path.extrude(path, cross_section)
+
     c.add_ref(waveguide)
 
     return c
 
 
 def _generate_meander_points(
-        height: float,
-        padding_length: float,
-        spacing: float,
-        num_turns: int
+    height: float, padding_length: float, spacing: float, num_turns: int
 ) -> np.ndarray:
     """
     Generates points for a meander pattern.
@@ -80,23 +99,29 @@ def _generate_meander_points(
     steps = (step_down, step_up)
     half_steps = (step_down_edge, step_up_edge)
 
-    turn_points = list(chain(*[[steps[i % 2], step_horizontal] for i in range(num_turns)]))
+    turn_points = list(
+        chain(*[[steps[i % 2], step_horizontal] for i in range(num_turns)])
+    )
     end_step = half_steps[num_turns % 2]
 
-    total_points = ([[0, 0], [padding_length, 0], step_up_edge, step_horizontal] +
-                    turn_points +
-                    [end_step, [padding_length, 0]])
+    total_points = (
+        [[0, 0], [padding_length, 0], step_up_edge, step_horizontal]
+        + turn_points
+        + [end_step, [padding_length, 0]]
+    )
 
     return np.array(total_points).cumsum(axis=0)
 
 
+@merge_decorator
 @gf.cell
-def meander_optimal_turn(wire_width: float = 0.2,
-                         height: float = 10,
-                         padding_length: float = 3,
-                         spacing: float = 2,
-                         num_turns: int = 9
-                         ):
+def meander_optimal_turn(
+    wire_width: float = 0.2,
+    height: float = 10,
+    padding_length: float = 3,
+    spacing: float = 2,
+    num_turns: int = 9,
+):
     turn = gc.optimal_90deg(width=wire_width)
 
     turn_size = turn.xmax - turn.xmin
@@ -110,28 +135,26 @@ def meander_optimal_turn(wire_width: float = 0.2,
 
     start_wg = c << padding_compass
 
-    prev_port = start_wg.ports['e3']
+    prev_port = start_wg.ports["e3"]
 
     # going up
     ref = c << turn
-    ref.connect('e1', prev_port, allow_type_mismatch=True)
-    prev_port = ref.ports['e2']
+    ref.connect("e1", prev_port, allow_type_mismatch=True)
+    prev_port = ref.ports["e2"]
 
     # padding height compass for start
     ref = c << padding_height_compass
-    ref.connect('e1', prev_port, allow_type_mismatch=True)
-    prev_port = ref.ports['e3']
+    ref.connect("e1", prev_port, allow_type_mismatch=True)
+    prev_port = ref.ports["e3"]
 
-    turn_ports_naming = [('e2', 'e1'), ('e1', 'e2')]
+    turn_ports_naming = [("e2", "e1"), ("e1", "e2")]
 
     for i in range(num_turns):
-
         turn_connect_name, turn_prev_name = turn_ports_naming[i % 2]
 
-        prev_port = _optimal_full_turn_with_spacing(c, turn, spacing_compass,
-                                                    turn_connect_name,
-                                                    turn_prev_name,
-                                                    prev_port)
+        prev_port = _optimal_full_turn_with_spacing(
+            c, turn, spacing_compass, turn_connect_name, turn_prev_name, prev_port
+        )
 
         # if last then use half hieght_compass
         if i == num_turns - 1:
@@ -140,8 +163,8 @@ def meander_optimal_turn(wire_width: float = 0.2,
             vertical_compass = height_compass
 
         ref = c << vertical_compass
-        ref.connect('e1', prev_port, allow_type_mismatch=True)
-        prev_port = ref.ports['e3']
+        ref.connect("e1", prev_port, allow_type_mismatch=True)
+        prev_port = ref.ports["e3"]
 
     ref = c << turn
     turn_connect_name, turn_prev_name = turn_ports_naming[num_turns % 2]
@@ -149,25 +172,30 @@ def meander_optimal_turn(wire_width: float = 0.2,
     prev_port = ref.ports[turn_prev_name]
 
     end_wg = c << padding_compass
-    end_wg.connect('e1', prev_port, allow_type_mismatch=True)
+    end_wg.connect("e1", prev_port, allow_type_mismatch=True)
 
-    c.add_port('e1', start_wg.ports['e1'])
-    c.add_port('e2', end_wg.ports['e3'])
+    c.add_port("e1", start_wg.ports["e1"])
+    c.add_port("e2", end_wg.ports["e3"])
 
     return c
 
 
-def _optimal_full_turn_with_spacing(component, optimal_turn, spacing_compass,
-                                    turn_connect_name, turn_prev_name,
-                                    prev_port):
+def _optimal_full_turn_with_spacing(
+    component,
+    optimal_turn,
+    spacing_compass,
+    turn_connect_name,
+    turn_prev_name,
+    prev_port,
+):
     c = component
     ref = c << optimal_turn
     ref.connect(turn_connect_name, prev_port, allow_type_mismatch=True)
     prev_port = ref.ports[turn_prev_name]
 
     ref = c << spacing_compass
-    ref.connect('e1', prev_port, allow_type_mismatch=True)
-    prev_port = ref.ports['e3']
+    ref.connect("e1", prev_port, allow_type_mismatch=True)
+    prev_port = ref.ports["e3"]
 
     ref = c << optimal_turn
     ref.connect(turn_connect_name, prev_port, allow_type_mismatch=True)

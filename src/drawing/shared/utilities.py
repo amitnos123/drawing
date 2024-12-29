@@ -6,6 +6,7 @@ Common operations used across different component types.
 import gdsfactory as gf
 from gdsfactory.typings import LayerSpec
 from typing import Tuple
+from functools import wraps
 
 # Type aliases
 Coordinate = Tuple[float, float]
@@ -17,7 +18,9 @@ DEFAULT_NUM_POINTS = 300
 
 
 @gf.cell
-def merge_referenced_shapes(component: gf.Component, layer: LayerSpec = DEFAULT_LAYER) -> gf.Component:
+def merge_referenced_shapes_old(
+    component: gf.Component, layer: LayerSpec = DEFAULT_LAYER
+) -> gf.Component:
     """
     Merges all referenced shapes in a component into a single component.
 
@@ -28,7 +31,9 @@ def merge_referenced_shapes(component: gf.Component, layer: LayerSpec = DEFAULT_
     Returns:
         gf.Component: New component with merged geometries.
     """
+
     merged_component = gf.Component()
+
     references = list(component.references)
 
     if not references:
@@ -44,15 +49,58 @@ def merge_referenced_shapes(component: gf.Component, layer: LayerSpec = DEFAULT_
 
     # Merge remaining references
     for ref in references[2:]:
-        merged_result = gf.boolean(
-            A=merged_result,
-            B=ref,
-            operation="or",
-            layer=layer
-        )
+        merged_result = gf.boolean(A=merged_result, B=ref, operation="or", layer=layer)
 
     # Add merged polygons and ports
     for layer, polygons in merged_result.get_polygons().items():
+        for polygon in polygons:
+            merged_component.add_polygon(polygon, layer=layer)
+
+    merged_component.add_ports(component.ports)
+    return
+
+
+@gf.cell
+def merge_referenced_shapes(
+    component: gf.Component, layer: LayerSpec = DEFAULT_LAYER
+) -> gf.Component:
+    """
+    Merges all referenced shapes in a component into a single component.
+
+    Args:
+        component: The component containing references to merge.
+        layer: Target layer for merged shapes.
+
+    Returns:
+        gf.Component: New component with merged geometries.
+    """
+
+    merged_component = gf.Component()
+
+    # references = list(component.references)
+    #
+    # if not references:
+    #     return component
+    #
+    # # Start with first two references
+    # merged_result = gf.boolean(
+    #     A=references[0],
+    #     B=references[1],
+    #     operation="or",
+    #     layer=layer,
+    # )
+    #
+    # # Merge remaining references
+    # for ref in references[2:]:
+    #     merged_result = gf.boolean(
+    #         A=merged_result,
+    #         B=ref,
+    #         operation="or",
+    #         layer=layer
+    #     )
+
+    # Add merged polygons and ports
+    for layer, polygons in component.get_polygons(merge=True).items():
         for polygon in polygons:
             merged_component.add_polygon(polygon, layer=layer)
 
@@ -62,10 +110,10 @@ def merge_referenced_shapes(component: gf.Component, layer: LayerSpec = DEFAULT_
 
 @gf.cell
 def smooth_corners(
-        component: gf.Component,
-        radius: float = 1.0,
-        num_points: int = DEFAULT_NUM_POINTS,
-        layer: LayerSpec = DEFAULT_LAYER
+    component: gf.Component,
+    radius: float = 1.0,
+    num_points: int = DEFAULT_NUM_POINTS,
+    layer: LayerSpec = DEFAULT_LAYER,
 ) -> gf.Component:
     """
     Smooths all corners in a component with a given radius.
@@ -89,3 +137,12 @@ def smooth_corners(
 
     c.add_ports(component.ports)
     return c
+
+
+def merge_decorator(func):
+    @wraps(func)
+    def foo(*args, **kwargs):
+        c = func()
+        return merge_referenced_shapes(c)
+
+    return foo

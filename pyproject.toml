@@ -1,0 +1,12 @@
+[project]
+name = "drawing"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "gdsfactory>=6.116.0",
+    "numpy>=1.24.4",
+    "pydantic>=1.10.19",
+    "shapely>=2.0.6",
+]
