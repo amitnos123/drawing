@@ -71,26 +71,28 @@ def parse_component(component: gf.Component, config: ExportConfig):
         hfss_variables[k] = (v[0] - align_by_point[0], v[1] - align_by_point[1])
 
     # converting hfss_variables to x direction and y direction
-    hfss_variables_parsed = {}
+    dependent_variables = {}
     for k, v in hfss_variables.items():
-        hfss_variables_parsed[f"{name}_{k}_x"] = (
+        dependent_variables[f"{name}_{k}_x"] = (
             f"{name}_{align_by_port_var_name}_x + {v[0]}{unit}"
         )
-        hfss_variables_parsed[f"{name}_{k}_y"] = (
+        dependent_variables[f"{name}_{k}_y"] = (
             f"{name}_{align_by_port_var_name}_y + {v[1]}{unit}"
         )
 
     # adding the reference variable
-    hfss_variables_parsed[f"{name}_{align_by_port_var_name}_x"] = f"0{unit}"
-    hfss_variables_parsed[f"{name}_{align_by_port_var_name}_y"] = f"0{unit}"
+    independent_variables = {
+        f"{name}_{align_by_port_var_name}_x": f"0{unit}",
+        f"{name}_{align_by_port_var_name}_y": f"0{unit}"
+    }
 
     points_as_string = [
         (
-            f"{align_by_port_var_name} + {x}unit",
-            f"{align_by_port_var_name} + {y}um",
+            f"{name}_{align_by_port_var_name}_x + {x}um",
+            f"{name}_{align_by_port_var_name}_y + {y}um",
             "0um",
         )
         for x, y in points
     ]
 
-    return points_as_string, hfss_variables_parsed
+    return points_as_string, independent_variables, dependent_variables
