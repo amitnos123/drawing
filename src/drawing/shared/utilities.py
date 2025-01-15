@@ -142,7 +142,7 @@ def smooth_corners(
 def merge_decorator(func):
     @wraps(func)
     def foo(*args, **kwargs):
-        c = func()
+        c = func(*args, **kwargs)
         return merge_referenced_shapes(c)
 
     return foo

@@ -7,11 +7,10 @@ import gdsfactory as gf
 import numpy as np
 from itertools import chain
 from gdsfactory.typings import LayerSpec
-from src.drawing.shared.utilities import DEFAULT_LAYER, merge_decorator
+from ..shared.utilities import DEFAULT_LAYER, merge_decorator
 
 
 @merge_decorator
-@gf.cell
 def meander_euler(
     wire_width: float = 0.2,
     height: float = 10,

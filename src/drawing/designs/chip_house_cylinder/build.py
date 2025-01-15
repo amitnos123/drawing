@@ -116,10 +116,10 @@ def build(hfss: Hfss, config: ChipHouseCylinderConfig):
     # adding meander
     meander = meander_euler(**config.meander_args)
     export_config = ExportConfig(
-        name='meander',
+        name='readout',
         unit="um",
-        align_by='port',
-        tolerance=1e-2,
+        # align_by='port',
+        tolerance=0.6,
         port='e1'
     )
 
@@ -128,13 +128,60 @@ def build(hfss: Hfss, config: ChipHouseCylinderConfig):
         for k, v in variables.items():
             hfss[k] = v
 
-    modeler.create_polyline(points,
-                            cover_surface=True,
-                            close_surface=True,
-                            material='perfect conductor')
+    readout = modeler.create_polyline(points,
+                                      cover_surface=True,
+                                      close_surface=True,
+                                      name='readout')
+
+    hfss.assign_perfecte_to_sheets(readout.name)
+
+    hfss['readout_e1_x'] = '0'
+    hfss['readout_e1_y'] = f'{config.chip_base_thickness.name} / 2'
+    hfss['readout_e1_z'] = f'-{config.chip_base_length.name} / 2'
+
+    # add a bbox as non model for meshing
+    readout_mesh_box = modeler.create_box(origin=['-readout_e1_x - readout_size_x / 2',
+                                                  'readout_e1_y - readout_size_y / 2 - 0.5mm',
+                                                  'readout_e1_z'],
+                                          sizes=['readout_size_x', 'readout_size_y + 1mm', 'readout_size_z'],
+                                          name='readout_mesh_box',
+                                          non_model=True
+                                          )
+
+    basic_eigenmode_properties = {
+        'SetupType': 'HfssEigen',
+        'MinimumFrequency': '2GHz',
+        'NumModes': 1,
+        'MaxDeltaFreq': 0.2,
+        'ConvergeOnRealFreq': True,
+        'MaximumPasses': 3,
+        'MinimumPasses': 1,
+        'MinimumConvergedPasses': 1,
+        'PercentRefinement': 30,
+        'IsEnabled': True,
+        'MeshLink': {'ImportMesh': False},
+        'BasisOrder': -1,
+        'DoLambdaRefine': True,
+        'DoMaterialLambda': True,
+        'SetLambdaTarget': False,
+        'Target': 0.4,
+        'UseMaxTetIncrease': False
+    }
+
+    hfss.create_setup('Setup1')
+    setup = hfss.get_setup('Setup1')
+    hfss.save_project()
+    setup.props(**basic_eigenmode_properties)
+
+    driven_setup = {'Name': 'Setup1',
+                    'Enabled': True,
+                    'Auto Solver Setting': 'Balanced',
+                    'Type': 'Interpolating',
+                    'Start': '6GHz',
+                    'Stop': '10GHz',
+                    'Count': 501}
+
     print(1)
-
-
 
     #
     # # Creating pins
@@ -191,7 +238,14 @@ if __name__ == '__main__':
         pin_d_location=Variable(name='chip_pin_d_location', value=18, unit='mm'),
 
         meander_type='euler',
-        meander_args={}
+        meander_args={
+            'wire_width': 100,
+            'height': 1500,
+            'padding_length': 500,
+            'spacing': 200,
+            'radius': 50,
+            'num_turns': 9
+        }
 
         # sapphire_house_pins_diameter: float = 0.5
         # sapphire_house_pins_waveguide_diameter: float = 1.15
@@ -209,7 +263,8 @@ if __name__ == '__main__':
     )
 
     with Hfss(version='2024.2', new_desktop=True,
-              design='stam', project='testing_import_project.aedt',
+              design='stam', project='stam.aedt',
+              solution_type='Eigenmode',
               close_on_exit=True, remove_lock=True, non_graphical=False) as hfss:
         build(hfss, example_config)
 
