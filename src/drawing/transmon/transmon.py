@@ -16,7 +16,6 @@ from ..shared import merge_decorator, smooth_corners, DEFAULT_LAYER
 
 
 @merge_decorator
-@gf.cell
 def _draw_transmon_with_sharp_edges(
         pad_width: float = 400,
         pad_height: float = 1000,
@@ -90,10 +89,14 @@ def _draw_transmon_with_sharp_edges(
     # Add port for antenna
     c.add_port('antenna_connection', right_pad.ports['e3'])
 
+    # Add port for orientation
+    c.add_port('orientation_port', center=left_pad.ports['e1'].dcenter,
+               width=100, orientation=0, layer=layer)
+
     return c
 
 
-@gf.cell
+@merge_decorator
 def _draw_transmon_smooth_edges(
         pad_width: float = 400,
         pad_height: float = 1000,
@@ -172,9 +175,8 @@ def _draw_transmon_smooth_edges(
     return c
 
 
-@merge_decorator
-@gf.cell
-def draw_transmon(
+# @merge_decorator
+def _draw_transmon(
         pad_width: float = 400,
         pad_height: float = 1000,
         pads_distance: float = 150,
@@ -246,8 +248,8 @@ def draw_transmon(
     return transmon
 
 
-@merge_decorator
-def draw_antenna(
+# @merge_decorator
+def _draw_antenna(
         antenna_length: float,
         antenna_width: float,
         antenna_radius: float,
@@ -270,8 +272,11 @@ def draw_antenna(
     return c
 
 
+draw_transmon = merge_decorator(_draw_transmon)
+draw_antenna = merge_decorator(_draw_antenna)
+
+
 @merge_decorator
-@gf.cell
 def draw_transmon_with_antenna(
         pad_width: float = 400,
         pad_height: float = 1000,
@@ -287,19 +292,19 @@ def draw_transmon_with_antenna(
         antenna_width: float = 100,
         antenna_radius: float = 250,
         layer: LayerSpec = DEFAULT_LAYER) -> gf.Component:
-    transmon = draw_transmon(pad_width=pad_width,
-                             pad_height=pad_height,
-                             pads_distance=pads_distance,
-                             taper_width=taper_width,
-                             junction_width=junction_width,
-                             junction_gap=junction_gap,
-                             junction_length=junction_length,
-                             smooth_features=smooth_features,
-                             feature_radius=feature_radius,
-                             pad_radius=pad_radius,
-                             layer=layer)
+    transmon = _draw_transmon(pad_width=pad_width,
+                              pad_height=pad_height,
+                              pads_distance=pads_distance,
+                              taper_width=taper_width,
+                              junction_width=junction_width,
+                              junction_gap=junction_gap,
+                              junction_length=junction_length,
+                              smooth_features=smooth_features,
+                              feature_radius=feature_radius,
+                              pad_radius=pad_radius,
+                              layer=layer)
 
-    antenna = draw_antenna(
+    antenna = _draw_antenna(
         antenna_length=antenna_length,
         antenna_width=antenna_width,
         antenna_radius=antenna_radius,
