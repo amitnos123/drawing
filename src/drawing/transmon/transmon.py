@@ -13,20 +13,24 @@ import gdsfactory as gf
 import gdsfactory.components as gc
 from gdsfactory.typings import LayerSpec
 from ..shared import merge_decorator, smooth_corners, DEFAULT_LAYER
+from .junctions import JunctionAdapter
 
 
 @merge_decorator
 @gf.cell
 def _draw_transmon_with_sharp_edges(
-    pad_width: float = 400,
-    pad_height: float = 1000,
-    pads_distance: float = 150,
-    taper_width: float = 45,
-    junction_width: float = 1,
-    junction_gap: float = 3.4,
-    junction_length: float = 10,
-    pad_radius: float = 0,
-    layer: LayerSpec = DEFAULT_LAYER,
+        pad_width: float = 400,
+        pad_height: float = 1000,
+        pads_distance: float = 150,
+        taper_width: float = 45,
+        pad_radius: float = 0,
+        layer: LayerSpec = DEFAULT_LAYER,
+        # junction_parameters,
+        junction_width: float = 1,
+        junction_gap: float = 3.4,
+        junction_length: float = 10,
+        junction_type: str = 'regular',
+        **junction_parameters
 ) -> gf.Component:
     """
     Creates a transmon qubit with optionally rounded pads but sharp features elsewhere.
@@ -63,45 +67,60 @@ def _draw_transmon_with_sharp_edges(
     )
 
     # Create junction
-    junction = gc.compass((junction_width, junction_length), layer=layer)
+    junction_parameters.update({
+        'type': junction_type,
+        'width': junction_width,
+        'gap': junction_gap,
+        'length': junction_length})
+
+    junction_constructor = JunctionAdapter.validate_python(junction_parameters)
+    junctions_dict = junction_constructor.build()
+
+
+    # junction = gc.compass((junction_width, junction_length), layer=layer)
 
     # Assemble left side
     left_pad = c << pad
     left_taper = c << taper
-    left_junction = c << junction
+    left_junction = c << junctions_dict['left']
+    # left_junction = c << junction
 
     left_taper.connect("e1", left_pad.ports["e3"], allow_width_mismatch=True)
-    left_junction.connect("e2", left_taper.ports["e2"], allow_width_mismatch=True)
+    # left_junction.connect("e2", left_taper.ports["e2"], allow_width_mismatch=True)
+    left_junction.connect("taper_connection", left_taper.ports["e2"], allow_width_mismatch=True)
 
     # Assemble right side
     right_pad = c << pad
     right_pad.dmovex(pads_distance + pad_width)  # Using dmovex for relative movement
 
     right_taper = c << taper
-    right_junction = c << junction
+    # right_junction = c << junction
+    right_junction = c << junctions_dict['right']
 
     right_taper.connect("e1", right_pad.ports["e1"], allow_width_mismatch=True)
-    right_junction.connect("e2", right_taper.ports["e2"], allow_width_mismatch=True)
+    right_junction.connect("taper_connection", right_taper.ports["e2"], allow_width_mismatch=True)
 
     # Add ports for junction connections
-    c.add_port("left_arm", left_junction.ports["e4"])
-    c.add_port("right_arm", right_junction.ports["e4"])
+    c.add_port("left_arm", left_junction.ports["inward_connection"])
+    # c.add_port("left_arm", left_junction.ports["e4"])
+    # c.add_port("right_arm", right_junction.ports["e4"])
+    c.add_port("right_arm", right_junction.ports["inward_connection"])
 
     return c
 
 
 @gf.cell
 def _draw_transmon_smooth_edges(
-    pad_width: float = 400,
-    pad_height: float = 1000,
-    pads_distance: float = 150,
-    taper_width: float = 45,
-    junction_width: float = 1,
-    junction_gap: float = 3.4,
-    junction_length: float = 10,
-    feature_radius: float = 1.0,
-    pad_radius: float = 50.0,
-    layer: LayerSpec = DEFAULT_LAYER,
+        pad_width: float = 400,
+        pad_height: float = 1000,
+        pads_distance: float = 150,
+        taper_width: float = 45,
+        junction_width: float = 1,
+        junction_gap: float = 3.4,
+        junction_length: float = 10,
+        feature_radius: float = 1.0,
+        pad_radius: float = 50.0,
+        layer: LayerSpec = DEFAULT_LAYER,
 ) -> gf.Component:
     """
     Creates a transmon qubit with rounded corners for both pads and other features.
@@ -161,17 +180,17 @@ def _draw_transmon_smooth_edges(
 @merge_decorator
 @gf.cell
 def draw_transmon(
-    pad_width: float = 400,
-    pad_height: float = 1000,
-    pads_distance: float = 150,
-    taper_width: float = 45,
-    junction_width: float = 1,
-    junction_gap: float = 3.4,
-    junction_length: float = 10,
-    smooth_features: bool = True,
-    feature_radius: float = 10.0,
-    pad_radius: float = 50.0,
-    layer: LayerSpec = DEFAULT_LAYER,
+        pad_width: float = 400,
+        pad_height: float = 1000,
+        pads_distance: float = 150,
+        taper_width: float = 45,
+        junction_width: float = 1,
+        junction_gap: float = 3.4,
+        junction_length: float = 10,
+        smooth_features: bool = True,
+        feature_radius: float = 10.0,
+        pad_radius: float = 50.0,
+        layer: LayerSpec = DEFAULT_LAYER,
 ) -> gf.Component:
     """
     Creates a transmon qubit with configurable corner rounding for different features.
