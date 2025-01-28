@@ -1,4 +1,6 @@
 from src.deprecated import meander
+from src.drawing.transmon import transmon
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     # euler = meander.meander_euler()
@@ -6,10 +8,19 @@ if __name__ == "__main__":
     # print(has_invalid_polygons(euler))
     # print(verify_shape_continuity(euler))
     # meander.meander_euler().write_gds('gds_files\\meander_euler.gds', with_metadata=False)
-    meander_inst = meander.meander_optimal_turn()
+    # meander_inst = meander.meander_optimal_turn()
     # meander.meander_optimal_turn().write_gds('gds_files\\meander_optimal.gds', with_metadata=False)
     # transmon.draw_transmon(feature_radius=5, pad_radius=200).write_gds('gds_files\\transmon.gds', with_metadata=False)
+<<<<<<< HEAD
     print(1)
 
     #
 
+=======
+    # tr = transmon.draw_transmon(feature_radius=10, pad_radius=100)
+    tr = transmon.draw_transmon_with_antenna(feature_radius=10, pad_radius=100)
+    tr.pprint_ports()
+    tr.draw_ports()
+    tr.plot()
+    plt.show()
+>>>>>>> 546d1ccb8c395a9f8252c189756770819a192680

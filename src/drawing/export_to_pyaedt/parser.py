@@ -1,10 +1,57 @@
+from typing import Literal
 import gdsfactory as gf
 import shapely
 import numpy as np
 from .config import ExportConfig
 
-from shapely.geometry import Point
-from shapely.ops import nearest_points
+from shapely.geometry import Point, LineString
+from shapely.ops import nearest_points, polygonize
+from numpy.typing import NDArray
+
+
+def points_to_closed_forms(points):
+    """
+    Converts a list of points into separate closed forms.
+
+    Args:
+        points (list of tuples): A flat list of points representing potential closed forms.
+
+    Returns:
+        list of list of tuples: A list of closed forms where each closed form is a list of points.
+    """
+    # Create a LineString from the points
+    line = LineString(points)
+
+    # Use polygonize to find closed loops
+    closed_forms = list(polygonize([line]))
+
+    # Convert each Polygon into a list of points
+    closed_points_list = [
+        list(np.array(poly.exterior.coords)) for poly in closed_forms
+    ]
+
+    return closed_points_list
+
+
+def construct_rotation(origin: NDArray, target: NDArray):
+    # origin = np.array([np.cos(origin_orientation_deg)]) * np.array([1, 0, 0])
+    v = np.cross(origin, target)
+    cosine_theta = np.dot(origin, target)  # 1 -cos(theta) / sin^2
+
+    # Skew-symmetric matrix of v
+    v_cross = np.array([
+        [0, -v[2], v[1]],
+        [v[2], 0, -v[0]],
+        [-v[1], v[0], 0]
+    ])
+
+    # angle rotation
+    c = (1 - cosine_theta) / np.dot(v, v)
+
+    # Compute R_ij = I + [v]_x + [v]_x^2
+    rotation = np.identity(3) + v_cross + v_cross @ v_cross * c
+
+    return rotation
 
 
 def find_new_port_location(original_port, simplified_polygon):
@@ -28,13 +75,144 @@ def find_new_port_location(original_port, simplified_polygon):
     return nearest_point_on_polygon.x, nearest_point_on_polygon.y
 
 
+def parse_component_multi(component: gf.Component, config: ExportConfig):
+    ports = component.ports
+    ports_to_center = dict(map(lambda x: (x.name, np.array(x.dcenter)), ports))
+
+    hfss_variables = {}
+
+    polygons = component.get_polygons_points()[1]  # Get all polygons
+    all_rotated_points = []
+
+    if config.tolerance > 0:
+        # Simplify each polygon
+        simplified_polygons = [
+            shapely.simplify(shapely.Polygon(points), tolerance=config.tolerance)
+            for points in polygons
+        ]
+        polygons = [list(simplified.exterior.coords) for simplified in simplified_polygons]
+
+        # Update ports to center after simplification
+        ports_to_center = dict(
+            map(
+                lambda x: (x[0], np.array(find_new_port_location(x[1], simplified_polygons[0]))),
+                ports_to_center.items(),
+            )
+        )
+
+    # Align by port
+    center = ports_to_center.pop(config.port)
+    align_by_port_var_name = config.port
+    align_by_point = np.array(center)
+
+    # Get current orientation
+    origin_angle = component.ports[config.port].orientation
+    origin = np.array([np.cos(origin_angle), np.sin(origin_angle), 0])
+    direction_to_vector = {
+        "X": np.array([1, 0, 0]),
+        "-X": np.array([-1, 0, 0]),
+        "Y": np.array([0, 1, 0]),
+        "-Y": np.array([0, -1, 0]),
+        "Z": np.array([0, 0, 1]),
+        "-Z": np.array([0, 0, -1]),
+    }
+    target = direction_to_vector[config.orientation]
+    rotation = construct_rotation(origin, target)
+
+    # Handle surface orientation
+    surface_orientation = config.surface_orientation
+    if surface_orientation is None:
+        surface_orientation_mapping = {
+            "X": 'Z',
+            "-X": 'Z',
+            "Y": 'Z',
+            "-Y": 'Z',
+            "Z": '-Y',
+            "-Z": 'Y',
+        }
+        surface_orientation = surface_orientation_mapping[config.orientation]
+
+    origin = rotation @ direction_to_vector['Z']
+    target = direction_to_vector[surface_orientation]
+    second_rotation = construct_rotation(origin, target)
+    rotation = second_rotation @ rotation
+
+    # Process each polygon
+    for points in polygons:
+        points = np.array(points)
+        points -= align_by_point
+
+        # Extend to 3D
+        length_of_points = points.shape[0]
+        points = np.hstack((points, np.zeros((length_of_points, 1))))
+
+        # Rotate
+        rotated_points = np.einsum('ij, kj -> ki', rotation, points)
+        all_rotated_points.append(rotated_points)
+
+    # Compute offset values and HFSS variables
+    name = config.name
+    unit = config.unit
+
+    for k, v in ports_to_center.items():
+        shifted_v = v - align_by_point
+        rotated_v = rotation @ np.array([shifted_v[0], shifted_v[1], 0])
+        hfss_variables[k] = tuple(rotated_v.tolist())
+
+    # Convert HFSS variables to independent and dependent variables
+    dependent_variables = {}
+    for k, v in hfss_variables.items():
+        dependent_variables[f"{name}_{k}_x"] = (
+            f"{name}_{align_by_port_var_name}_x + {v[0]}{unit}"
+        )
+        dependent_variables[f"{name}_{k}_y"] = (
+            f"{name}_{align_by_port_var_name}_y + {v[1]}{unit}"
+        )
+        dependent_variables[f"{name}_{k}_z"] = (
+            f"{name}_{align_by_port_var_name}_z + {v[2]}{unit}"
+        )
+
+    # need to get the smallest point in each direction for each polygon
+    flat_rotated_points = np.concatenate(all_rotated_points)
+    size = flat_rotated_points.max(axis=0) - flat_rotated_points.min(axis=0)
+
+    # size = np.array([rotated_points.max(axis=0) - rotated_points.min(axis=0) for rotated_points in all_rotated_points])
+    independent_variables = {
+        f"{name}_{align_by_port_var_name}_x": f"0{unit}",
+        f"{name}_{align_by_port_var_name}_y": f"0{unit}",
+        f"{name}_{align_by_port_var_name}_z": f"0{unit}",
+        f"{name}_size_x": f"{size[0]}{unit}",
+        f"{name}_size_y": f"{size[1]}{unit}",
+        f"{name}_size_z": f"{size[2]}{unit}",
+    }
+
+    # Yield points for each polygon
+    all_rotated_points_as_string = []
+    for rotated_points in all_rotated_points:
+        points_as_string = [
+            (
+                f"{name}_{align_by_port_var_name}_x + {float(x)}um",
+                f"{name}_{align_by_port_var_name}_y + {float(y)}um",
+                f"{name}_{align_by_port_var_name}_z + {float(z)}um",
+            )
+            for x, y, z in rotated_points
+        ]
+
+        all_rotated_points_as_string.append(points_as_string)
+
+    return all_rotated_points_as_string, independent_variables, dependent_variables
+
+
+
 def parse_component(component: gf.Component, config: ExportConfig):
     ports = component.ports
-    ports_to_center = dict(map(lambda x: (x.name, x.dcenter), ports))
+    ports_to_center = dict(map(lambda x: (x.name, np.array(x.dcenter)), ports))
 
     hfss_variables = {}
 
     points = component.get_polygons_points()[1][0].tolist()
+
+
 
     if config.tolerance > 0:
         simplified = shapely.simplify(
@@ -44,23 +222,63 @@ def parse_component(component: gf.Component, config: ExportConfig):
 
         ports_to_center = dict(
             map(
-                lambda x: (x[0], find_new_port_location(x[1], simplified)),
+                lambda x: (x[0], np.array(find_new_port_location(x[1], simplified))),
                 ports_to_center.items(),
             )
         )
 
-    if config.align_by == "port":
-        center = ports_to_center.pop(config.port)
-        align_by_port_var_name = config.port
-        align_by_point = center
-    elif config.align_by == "xmin":
-        align_by_point = min(points, key=lambda x: x[0])
-        align_by_port_var_name = "offset"
-    else:
-        raise ValueError(f"Unidentified value for align by: {config.align_by=}")
+    # if config.align_by == "port":
+    center = ports_to_center.pop(config.port)
+    align_by_port_var_name = config.port
+    align_by_point = np.array(center)
+    # elif config.align_by == "xmin":
+    #     align_by_point = min(points, key=lambda x: x[0])
+    #     align_by_port_var_name = "offset"
+    # else:
+    #     raise ValueError(f"Unidentified value for align by: {config.align_by=}")
 
     points = np.array(points)
     points -= align_by_point
+
+    # extending to 3d
+    length_of_points = points.shape[0]  # Number of vectors
+    points = np.hstack((points, np.zeros((length_of_points, 1))))
+
+    # get current orientation
+    origin_angle = component.ports[config.port].orientation
+    origin = np.array([np.cos(origin_angle), np.sin(origin_angle), 0])
+    direction_to_vector = {
+        "X": np.array([1, 0, 0]),
+        "-X": np.array([-1, 0, 0]),
+        "Y": np.array([0, 1, 0]),
+        "-Y": np.array([0, -1, 0]),
+        "Z": np.array([0, 0, 1]),
+        "-Z": np.array([0, 0, -1])
+    }
+
+    target = direction_to_vector[config.orientation]
+    rotation = construct_rotation(origin, target)
+
+    # now do another rotation to align surface
+    surface_orientation = config.surface_orientation
+    if surface_orientation is None:
+        surface_orientation_mapping = {
+            "X": 'Z',
+            "-X": 'Z',
+            "Y": 'Z',
+            "-Y": 'Z',
+            "Z": '-Y',
+            "-Z": 'Y'
+        }
+        surface_orientation = surface_orientation_mapping[config.orientation]
+
+    origin = rotation @ direction_to_vector['Z']
+    target = direction_to_vector[surface_orientation]
+    second_rotation = construct_rotation(origin, target)
+    rotation = second_rotation @ rotation
+
+    # rotate
+    rotated_points = np.einsum('ij, kj -> ki', rotation, points)
 
     # get offset value
     name = config.name
@@ -68,29 +286,58 @@ def parse_component(component: gf.Component, config: ExportConfig):
 
     # adding all the ports to the hfss variables
     for k, v in ports_to_center.items():
-        hfss_variables[k] = (v[0] - align_by_point[0], v[1] - align_by_point[1])
+        shifted_v = v - align_by_point
+        rotated_v = rotation @ np.array([shifted_v[0], shifted_v[1], 0])
+        hfss_variables[k] = tuple(rotated_v.tolist())
 
     # converting hfss_variables to x direction and y direction
-    hfss_variables_parsed = {}
+    dependent_variables = {}
     for k, v in hfss_variables.items():
-        hfss_variables_parsed[f"{name}_{k}_x"] = (
+        dependent_variables[f"{name}_{k}_x"] = (
             f"{name}_{align_by_port_var_name}_x + {v[0]}{unit}"
         )
-        hfss_variables_parsed[f"{name}_{k}_y"] = (
+        dependent_variables[f"{name}_{k}_y"] = (
             f"{name}_{align_by_port_var_name}_y + {v[1]}{unit}"
         )
 
+        dependent_variables[f"{name}_{k}_z"] = (
+            f"{name}_{align_by_port_var_name}_z + {v[2]}{unit}"
+        )
+
+    # size
+    size = rotated_points.max(axis=0) - rotated_points.min(axis=0)
+
     # adding the reference variable
-    hfss_variables_parsed[f"{name}_{align_by_port_var_name}_x"] = f"0{unit}"
-    hfss_variables_parsed[f"{name}_{align_by_port_var_name}_y"] = f"0{unit}"
+    independent_variables = {
+        f"{name}_{align_by_port_var_name}_x": f"0{unit}",
+        f"{name}_{align_by_port_var_name}_y": f"0{unit}",
+        f"{name}_{align_by_port_var_name}_z": f"0{unit}",
+        f"{name}_size_x": f"{size[0]}{unit}",
+        f"{name}_size_y": f"{size[1]}{unit}",
+        f"{name}_size_z": f"{size[2]}{unit}"
+    }
+
 
     points_as_string = [
         (
-            f"{align_by_port_var_name} + {x}unit",
-            f"{align_by_port_var_name} + {y}um",
-            "0um",
+            f"{name}_{align_by_port_var_name}_x + {float(x)}um",
+            f"{name}_{align_by_port_var_name}_y + {float(y)}um",
+            f"{name}_{align_by_port_var_name}_z + {float(z)}um",
         )
-        for x, y in points
+        for x, y, z in rotated_points
     ]
 
-    return points_as_string, hfss_variables_parsed
+    return points_as_string, independent_variables, dependent_variables
+
+
+if __name__ == '__main__':
+    origin = np.array([1, 0, 0])
+    target = np.array([0, 1, 0])
+
+    r = construct_rotation(origin, target)
+
+    points = np.array([[1, 0, 0], [0.5, 0, 0]])
+
+    rotated_points = np.einsum('ij, kj -> ki', r, points)
+
+    print(1)
