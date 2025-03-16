@@ -53,7 +53,7 @@ class IrregularJunction(BaseModel):
             gf.Component: A component representing the complete irregular junction.
         """
         left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
-                                    c.ports['left_narrow_end'].center[0]) / 1000
+                                    c.ports['left_narrow_end'].center[0])
         length = (left_to_right_distance_x - self.gap) / 2
 
         right_junction = gc.compass((length, self.width), layer=self.layer)
@@ -63,11 +63,11 @@ class IrregularJunction(BaseModel):
         ref = w << c
         left_junction = w << left_junction
         left_junction.connect('taper_connection', ref.ports['left_narrow_end'])
-        w.add_port('left_arm', left_junction.ports['inward_connection'])
+        w.add_port('left_arm', port=left_junction.ports['inward_connection'])
 
         right_junction = w << right_junction
         right_junction.connect('e3', ref.ports['right_narrow_end'])
-        w.add_port('right_arm', right_junction.ports['e1'])
+        w.add_port('right_arm', port=right_junction.ports['e1'])
 
         return w
 
@@ -93,6 +93,6 @@ class IrregularJunction(BaseModel):
         vertical_ref.connect('e2', horizontal_ref.ports['e4'], allow_width_mismatch=True)
         vertical_ref.move(vertical_ref.size_info.ne, horizontal_ref.size_info.ne)
 
-        c.add_port('taper_connection', horizontal_ref.ports['e1'])
-        c.add_port('inward_connection', vertical_ref.ports['e4'])
+        c.add_port('taper_connection', port=horizontal_ref.ports['e1'])
+        c.add_port('inward_connection', port=vertical_ref.ports['e4'])
         return c

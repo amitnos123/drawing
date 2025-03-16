@@ -60,14 +60,14 @@ def meander_euler(
     start_port = gf.Port(
         'e1',
         center=tuple(points[0].tolist()),
-        layer=layer,
+        layer=layer[0],
         width=wire_width,
         orientation=180
     )
     end_port = gf.Port(
         'e2',
         center=tuple(points[-1].tolist()),
-        layer=layer,
+        layer=layer[0],
         width=wire_width,
         orientation=0
     )
