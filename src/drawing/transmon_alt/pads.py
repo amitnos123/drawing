@@ -46,6 +46,6 @@ class PadConfig(BaseModel):
         right_ref = c << pad
         right_ref.dmovex(self.distance + self.width)
 
-        c.add_port("antenna_port", right_ref.ports["e3"])
-        c.add_port("orientation_port", left_ref.ports["e1"], port_type='electrical')
+        c.add_port(name="antenna_port", port=right_ref.ports["e3"])
+        c.add_port(name="orientation_port", port=left_ref.ports["e1"], port_type='electrical')
         return left_ref, right_ref

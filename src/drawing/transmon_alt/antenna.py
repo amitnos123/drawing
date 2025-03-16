@@ -54,9 +54,9 @@ class AntennaConfig(BaseModel):
         circle_ref = c << circle
 
         circle_port = gf.Port(
-            'circle_port',
+            name='circle_port',
             center=circle_ref.center,
-            layer=DEFAULT_LAYER,
+            layer=DEFAULT_LAYER[0],
             width=self.width,
             orientation=180
         )

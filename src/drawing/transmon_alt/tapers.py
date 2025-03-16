@@ -46,8 +46,8 @@ class TaperConfig(BaseModel):
         taper_ref = c << taper
         compass_ref = c << compass
         compass_ref.connect('e1', taper_ref.ports['narrow_end'])
-        c.add_port('wide_end', taper_ref.ports['wide_end'])
-        c.add_port('narrow_end', compass_ref.ports['e3'])
+        c.add_port(name='wide_end', port=taper_ref.ports['wide_end'])
+        c.add_port(name='narrow_end', port=compass_ref.ports['e3'])
         return c
 
     def build(self, c: gf.Component) -> tuple:

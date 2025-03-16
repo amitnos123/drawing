@@ -51,7 +51,7 @@ class RegularJunction(BaseModel):
             gf.Component: The complete regular junction component.
         """
         left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
-                                    c.ports['left_narrow_end'].center[0]) / 1000
+                                    c.ports['left_narrow_end'].center[0])
         length = (left_to_right_distance_x - self.gap) / 2
 
         junction = gc.compass((length, self.width), layer=self.layer)
@@ -63,7 +63,7 @@ class RegularJunction(BaseModel):
         left_ref.connect('e1', ref.ports['left_narrow_end'])
         right_ref.connect('e3', ref.ports['right_narrow_end'])
 
-        w.add_port('left_arm', left_ref.ports['e3'])
-        w.add_port('right_arm', right_ref.ports['e1'])
+        w.add_port('left_arm', port=left_ref.ports['e3'])
+        w.add_port('right_arm', port=right_ref.ports['e1'])
         w.add_ports(c.ports)
         return w

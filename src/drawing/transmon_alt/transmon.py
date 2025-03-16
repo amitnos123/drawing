@@ -8,6 +8,8 @@ import gdsfactory as gf
 import gdsfactory.components as gc
 from ..shared import DEFAULT_LAYER, smooth_corners, merge_referenced_shapes
 from typing import TypeVar, Type
+import matplotlib.pyplot as plt
+
 
 
 class IntegrationConfig(BaseModel):
@@ -80,14 +82,18 @@ class TransmonConfig(BaseModel):
 
         # Build pads and tapers
         left_pad, right_pad = self.pad.build(c)
+
         left_taper, right_taper = self.taper.build(c)
+
 
         # Optionally add the antenna to the layout.
         if self.integration_config.use_antenna:
             self.antenna.build(c)
 
+
         # Connect tapers to pads using the junction configuration.
         self.junction.connect_tapers_to_pads(left_pad, right_pad, left_taper, right_taper)
+
 
         # Merge and smooth the shapes if needed.
         c = self.smooth_and_merge(c, left_taper, right_taper)
@@ -115,8 +121,8 @@ class TransmonConfig(BaseModel):
             # Adjust left port coordinates.
             port = left_taper.ports['narrow_end']
             center = port.center
-            center = (center[0] // 1000 - self.integration_config.feature_radius / 2, center[1] // 1000)
-            width = port.width // 1000
+            center = (center[0] - self.integration_config.feature_radius / 2, center[1])
+            width = port.width
             c.add_port(
                 'left_narrow_end',
                 center=center,
@@ -129,8 +135,8 @@ class TransmonConfig(BaseModel):
             # Adjust right port coordinates.
             port = right_taper.ports['narrow_end']
             center = port.center
-            center = (center[0] // 1000 + self.integration_config.feature_radius / 2, center[1] // 1000)
-            width = port.width // 1000
+            center = (center[0] + self.integration_config.feature_radius / 2, center[1])
+            width = port.width
             c.add_port(
                 'right_narrow_end',
                 center=center,
@@ -158,14 +164,14 @@ class TransmonConfig(BaseModel):
 
             # Preserve existing ports except for the narrow_end ports.
             w.add_ports([p for p in ref.ports if p.name not in ('left_narrow_end', 'right_narrow_end')])
-            w.add_port('left_narrow_end', left_ref.ports['e3'])
-            w.add_port('right_narrow_end', right_ref.ports['e1'])
+            w.add_port('left_narrow_end', port=left_ref.ports['e3'])
+            w.add_port('right_narrow_end', port=right_ref.ports['e1'])
 
             return merge_referenced_shapes(w)
 
         # When no smoothing is required, simply propagate the taper ports.
-        c.add_port('left_narrow_end', left_taper.ports['narrow_end'])
-        c.add_port('right_narrow_end', right_taper.ports['narrow_end'])
+        c.add_port('left_narrow_end', port=left_taper.ports['narrow_end'])
+        c.add_port('right_narrow_end', port=right_taper.ports['narrow_end'])
         return merge_referenced_shapes(c)
 
     @classmethod
