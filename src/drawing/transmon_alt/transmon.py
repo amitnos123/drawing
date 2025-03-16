@@ -39,106 +39,153 @@ def create_nested_from_flat_by_prefix(prefixes: list[str], d: dict):
 
 
 class TransmonConfig(BaseModel):
+    """
+    Configuration for constructing a complete transmon layout using GDSFactory.
+
+    This configuration encapsulates parameters for integrating pads, tapers, junctions,
+    and an optional antenna. It manages shape merging, smoothing of corners, and the overall
+    connectivity required to build a transmon component.
+
+    Attributes:
+        integration_config (IntegrationConfig): Settings controlling integration features
+            such as feature radius and antenna usage.
+        pad (PadConfig): Configuration parameters for pad dimensions and layout.
+        taper (TaperConfig): Configuration for taper shapes.
+        junction (SupportedJunctions): Junction configuration that connects tapers to pads.
+            Defaults to a regular junction.
+        antenna (AntennaConfig): Configuration for the optional antenna shape.
+        layer (LayerSpec): GDS layer specification applied to all components.
+    """
     integration_config: IntegrationConfig = IntegrationConfig()
     pad: PadConfig = PadConfig()
     taper: TaperConfig = TaperConfig()
     junction: SupportedJunctions = RegularJunction()
     antenna: AntennaConfig = AntennaConfig()
-
     layer: LayerSpec = DEFAULT_LAYER
 
-    def build(self):
+    def build(self) -> gf.Component:
+        """
+        Builds the complete transmon component.
+
+        This method performs the following steps:
+          1. Constructs pads and tapers.
+          2. Optionally builds and connects an antenna.
+          3. Uses the junction configuration to connect tapers to pads.
+          4. Merges and smooths shapes as specified in the integration configuration.
+
+        Returns:
+            gf.Component: The finalized transmon component with merged and smoothed shapes.
+        """
         c = gf.Component()
 
-        # Build pads
+        # Build pads and tapers
         left_pad, right_pad = self.pad.build(c)
-
-        # return c
-
-        # Build tapers
         left_taper, right_taper = self.taper.build(c)
 
-        # if antenna
+        # Optionally add the antenna to the layout.
         if self.integration_config.use_antenna:
             self.antenna.build(c)
-        # integrating all
+
+        # Connect tapers to pads using the junction configuration.
         self.junction.connect_tapers_to_pads(left_pad, right_pad, left_taper, right_taper)
 
-        # merging
+        # Merge and smooth the shapes if needed.
         c = self.smooth_and_merge(c, left_taper, right_taper)
-
         c = self.junction.build(c)
 
         return merge_referenced_shapes(c)
 
-    def smooth_and_merge(self, c, left_taper, right_taper):
+    def smooth_and_merge(self, c: gf.Component, left_taper, right_taper) -> gf.Component:
+        """
+        Applies smoothing and shape merging to the component.
+
+        If a positive feature radius is set in the integration configuration, the function
+        creates new ports based on the tapers’ narrow ends, merges shapes, and smooths the corners.
+        Otherwise, it directly adds the taper ports.
+
+        Args:
+            c (gf.Component): The component to process.
+            left_taper: The left taper sub-component.
+            right_taper: The right taper sub-component.
+
+        Returns:
+            gf.Component: The processed component with updated ports and merged shapes.
+        """
         if self.integration_config.feature_radius > 0:
+            # Adjust left port coordinates.
             port = left_taper.ports['narrow_end']
             center = port.center
-            center = center[0] // 1000 - self.integration_config.feature_radius / 2, center[1] // 1000
+            center = (center[0] // 1000 - self.integration_config.feature_radius / 2, center[1] // 1000)
             width = port.width // 1000
-            c.add_port('left_narrow_end',
-                       center=center,
-                       port_type='electrical',
-                       layer=self.layer,
-                       width=width,
-                       orientation=0)
-            #
+            c.add_port(
+                'left_narrow_end',
+                center=center,
+                port_type='electrical',
+                layer=self.layer,
+                width=width,
+                orientation=0
+            )
+
+            # Adjust right port coordinates.
             port = right_taper.ports['narrow_end']
             center = port.center
-            center = center[0] // 1000 + self.integration_config.feature_radius / 2, center[1] // 1000
+            center = (center[0] // 1000 + self.integration_config.feature_radius / 2, center[1] // 1000)
             width = port.width // 1000
-
-            c.add_port('right_narrow_end',
-                       center=center,
-                       port_type='electrical',
-                       layer=self.layer,
-                       width=width,
-                       orientation=180)
+            c.add_port(
+                'right_narrow_end',
+                center=center,
+                port_type='electrical',
+                layer=self.layer,
+                width=width,
+                orientation=180
+            )
 
             c = merge_referenced_shapes(c)
             c = smooth_corners(c, radius=self.integration_config.feature_radius)
 
-            # adding another compass to make sharp edges at the end
+            # Add a compass to sharpen the end connections.
             w = gf.Component()
-            compass = gc.compass((self.integration_config.feature_radius / 2, self.taper.narrow_width),
-                                 layer=self.layer)
-
+            compass = gc.compass(
+                (self.integration_config.feature_radius / 2, self.taper.narrow_width),
+                layer=self.layer
+            )
             ref = w << c
-
             left_ref = w << compass
             right_ref = w << compass
 
             left_ref.connect('e1', ref.ports['left_narrow_end'])
             right_ref.connect('e3', ref.ports['right_narrow_end'])
 
-            w.add_ports(list(filter(lambda x: x.name not in ('left_narrow_end',
-                                                             'right_narrow_end'), ref.ports)))
+            # Preserve existing ports except for the narrow_end ports.
+            w.add_ports([p for p in ref.ports if p.name not in ('left_narrow_end', 'right_narrow_end')])
             w.add_port('left_narrow_end', left_ref.ports['e3'])
             w.add_port('right_narrow_end', right_ref.ports['e1'])
 
             return merge_referenced_shapes(w)
 
-        else:
-
-            c.add_port('left_narrow_end', left_taper.ports['narrow_end'])
-            c.add_port('right_narrow_end', right_taper.ports['narrow_end'])
-
-            return merge_referenced_shapes(c)
+        # When no smoothing is required, simply propagate the taper ports.
+        c.add_port('left_narrow_end', left_taper.ports['narrow_end'])
+        c.add_port('right_narrow_end', right_taper.ports['narrow_end'])
+        return merge_referenced_shapes(c)
 
     @classmethod
-    def load_from_flat_dict(cls, d: dict):
+    def load_from_flat_dict(cls, d: dict) -> "TransmonConfig":
+        """
+        Creates a TransmonConfig instance from a flat dictionary of parameters.
 
-        nested_dict = create_nested_from_flat_by_prefix(prefixes=['integration_config', 'pad',
-                                                                  'antenna', 'taper', 'junction'],
-                                                        d=d)
+        The function splits the flat dictionary into nested dictionaries based on predefined prefixes
+        and instantiates the TransmonConfig.
 
+        Args:
+            d (dict): Flat dictionary containing configuration parameters.
 
+        Returns:
+            TransmonConfig: A configuration instance built from the provided dictionary.
+        """
+        nested_dict = create_nested_from_flat_by_prefix(
+            prefixes=['integration_config', 'pad', 'antenna', 'taper', 'junction'],
+            d=d
+        )
         nested_dict['junction']['type'] = nested_dict['junction'].get('type', 'regular')
-        # integration_config = load_relevant_parameters(d, IntegrationConfig, 'integration_config_')
-        # pad = load_relevant_parameters(d, PadConfig, 'pad_')
-        # antenna = load_relevant_parameters(d, AntennaConfig, 'antenna')
-        # taper_config = load_relevant_parameters(d, TaperConfig, 'taper_')
-        # junction_config = load_relevant_parameters(d, JunctionAdapter, 'junction_')
-
         return TransmonConfig(**nested_dict)
+

@@ -1,8 +1,10 @@
 """
-Configuration objects for Meander components in GDS layouts.
-Uses Pydantic for type validation and parameter encapsulation.
-"""
+Configuration objects for meander components.
 
+Provides Pydantic models to encapsulate parameters for both Euler and optimal turn
+meander implementations.
+"""
+from typing import Literal
 from pydantic import BaseModel
 from gdsfactory.typings import LayerSpec
 from src.drawing.shared.utilities import DEFAULT_LAYER
@@ -10,10 +12,19 @@ from src.drawing.shared.utilities import DEFAULT_LAYER
 
 class MeanderEulerConfig(BaseModel):
     """
-    Configuration for the meander_euler function.
-    """
+    Configuration for creating a meander pattern using Euler bends.
 
-    type: str = "meander_euler"
+    Attributes:
+        type (str): Identifier for the Euler meander configuration.
+        wire_width (float): Width of the wire.
+        height (float): Total height of the meander.
+        padding_length (float): Padding length at the start/end.
+        spacing (float): Horizontal spacing between turns.
+        num_turns (int): Number of turns.
+        radius (float): Radius used in the Euler bends.
+        layer (LayerSpec): GDS layer specification.
+    """
+    type: Literal['meander_euler'] = "meander_euler"
     wire_width: float = 0.2
     height: float = 10.0
     padding_length: float = 3.0
@@ -25,10 +36,17 @@ class MeanderEulerConfig(BaseModel):
 
 class MeanderOptimalTurnConfig(BaseModel):
     """
-    Configuration for the meander_optimal_turn function.
-    """
+    Configuration for creating a meander pattern using optimal 90-degree turns.
 
-    type: str = "meander_optimal_turn"
+    Attributes:
+        type (str): Identifier for the optimal turn meander configuration.
+        wire_width (float): Width of the wire.
+        height (float): Total height of the meander.
+        padding_length (float): Padding length at the start/end.
+        spacing (float): Horizontal spacing between turns.
+        num_turns (int): Number of turns.
+    """
+    type: Literal['meander_optimal_turn'] = "meander_optimal_turn"
     wire_width: float = 0.2
     height: float = 10.0
     padding_length: float = 3.0
