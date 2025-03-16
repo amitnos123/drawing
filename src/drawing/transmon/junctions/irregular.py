@@ -1,16 +1,19 @@
 from pydantic import BaseModel
 from typing_extensions import Literal
-from ...shared import DEFAULT_LAYER
+# from ...shared import DEFAULT_LAYER
 from gdsfactory.typings import LayerSpec
 import gdsfactory as gf
 import gdsfactory.components as gc
 
 
+
+DEFAULT_LAYER = (1, 0)
+
 class IrregularJunction(BaseModel):
     type: Literal['irregular'] = 'irregular'
     width: float = 1
-    thickness: float = 2
-    vertical_length: float = 4
+    junction_thickness: float = 2
+    junction_vertical_length: float = 4
     gap: float = 3
     length: float = 10
     layer: LayerSpec = DEFAULT_LAYER
@@ -40,19 +43,31 @@ class IrregularJunction(BaseModel):
 
     def _build_asymmetric_elbow_shape(self):
         horizontal = gc.compass((self.width, self.length), layer=self.layer)
-        vertical = gc.compass((self.thickness, self.vertical_length), layer=self.layer)
+        vertical = gc.compass((self.junction_thickness, self.junction_vertical_length), layer=self.layer)
 
         c = gf.Component()
         horizontal_ref = c << horizontal
         vertical_ref = c << vertical
 
         vertical_ref.connect('e2', horizontal_ref.ports['e1'], allow_width_mismatch=True)
-        vertical.move(vertical_ref.size_info.nw, horizontal_ref.size_info.sw)
+        vertical_ref.move(vertical_ref.size_info.se, horizontal_ref.size_info.se)
 
         c.add_port('taper_connection', horizontal_ref.ports['e2'])
-        c.add_port('inward_connection', horizontal_ref.ports['e4'])
+        c.add_port('inward_connection', vertical_ref.ports['e4'])
 
         return c
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
+    constructor = IrregularJunction()
+    b = constructor.build()
+    c = b['left']
+    c.draw_ports()
+    c.plot()
+    plt.show()
+
+
 
 
 

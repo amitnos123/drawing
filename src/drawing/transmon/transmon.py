@@ -14,6 +14,8 @@ import gdsfactory.components as gc
 from gdsfactory.typings import LayerSpec
 from ..shared import merge_decorator, smooth_corners, DEFAULT_LAYER
 
+from .junctions import JunctionAdapter
+
 
 @merge_decorator
 def _draw_transmon_with_sharp_edges(
@@ -65,29 +67,49 @@ def _draw_transmon_with_sharp_edges(
     )
 
     # Create junction
-    junction = gc.compass((junction_width, junction_length), layer=layer)
+    junction_parameters.update({
+        'type': junction_type,
+        'width': junction_width,
+        'gap': junction_gap,
+        'length': junction_length,
+        'layer': layer
+    })
+
+    junction_constructor = JunctionAdapter.validate_python(junction_parameters)
+    junctions_dict = junction_constructor.build()
+
+    # left_junction = gc.compass((junction_width, junction_length), layer=layer)
+    # left_junction = gc.compass((junction_width, junction_length), layer=layer)
 
     # Assemble left side
     left_pad = c << pad
     left_taper = c << taper
-    left_junction = c << junction
+    # left_junction = c << junction
+    left_junction = c << junctions_dict['left']
 
     left_taper.connect("e1", left_pad.ports["e3"], allow_width_mismatch=True)
-    left_junction.connect("e1", left_taper.ports["e2"], allow_width_mismatch=True)
+    # left_junction.connect("e2", left_taper.ports["e2"], allow_width_mismatch=True)
+    left_junction.connect("taper_connection", left_taper.ports["e2"], allow_width_mismatch=True)
 
     # Assemble right side
     right_pad = c << pad
     right_pad.dmovex(pads_distance + pad_width)  # Using dmovex for relative movement
 
     right_taper = c << taper
-    right_junction = c << junction
+    # right_junction = c << junction
+    right_junction = c << junctions_dict['right']
 
     right_taper.connect("e1", right_pad.ports["e1"], allow_width_mismatch=True)
-    right_junction.connect("e3", right_taper.ports["e2"], allow_width_mismatch=True)
+    if junction_constructor.type == 'irregular':
+        right_taper.dmovey(-junction_constructor.junction_vertical_length // 2)
+    # right_junction.connect("e4", right_taper.ports["e2"], allow_width_mismatch=True)
+    right_junction.connect("taper_connection", right_taper.ports["e2"], allow_width_mismatch=True)
 
     # Add ports for junction connections
-    c.add_port("junction_left_arm", left_junction.ports["e3"])
-    c.add_port("junction_right_arm", right_junction.ports["e1"])
+    # c.add_port("junction_left_arm", left_junction.ports["e4"])
+    # c.add_port("junction_right_arm", right_junction.ports["e2"])
+    c.add_port("junction_left_arm", left_junction.ports["inward_connection"])
+    c.add_port("junction_right_arm", right_junction.ports["inward_connection"])
 
     # Add port for antenna
     c.add_port('antenna_connection', right_pad.ports['e3'])
@@ -111,6 +133,9 @@ def _draw_transmon_smooth_edges(
         feature_radius: float = 1.0,
         pad_radius: float = 50.0,
         layer: LayerSpec = DEFAULT_LAYER,
+        junction_type: str = 'regular',
+        **junction_parameters
+
 ) -> gf.Component:
     """
     Creates a transmon qubit with rounded corners for both pads and other features.
@@ -143,6 +168,8 @@ def _draw_transmon_smooth_edges(
         junction_length=junction_length,
         pad_radius=pad_radius,
         layer=layer,
+        junction_type=junction_type,
+        **junction_parameters
     )
 
     # Apply smoothing to all features
@@ -156,14 +183,17 @@ def _draw_transmon_smooth_edges(
     modified_ports = ('junction_left_arm', 'junction_right_arm')
 
     # Add junction extensions with matching feature radius
-    half_junction = gc.compass((feature_radius, junction_width), layer=layer)
+    left_half_junction = gc.compass((feature_radius, ref.ports['junction_left_arm'].width // 1000), layer=layer)
+    right_half_junction = gc.compass((feature_radius, ref.ports['junction_right_arm'].width // 1000), layer=layer)
+    # right_half_junction = gc.compass((feature_radius, junction_width), layer=layer)
+    # left_half_junction = gc.compass((feature_radius, junction_width), layer=layer)
 
-    left_ext = c << half_junction
-    left_ext.connect("e1", ref.ports["junction_left_arm"])
+    left_ext = c << left_half_junction
+    left_ext.connect("e1", ref.ports["junction_left_arm"], allow_width_mismatch=True)
     left_ext.dmovex(-feature_radius)
 
-    right_ext = c << half_junction
-    right_ext.connect("e3", ref.ports["junction_right_arm"])
+    right_ext = c << right_half_junction
+    right_ext.connect("e3", ref.ports["junction_right_arm"], allow_width_mismatch=True)
     right_ext.dmovex(feature_radius)
 
     # Add ports for external connections
@@ -191,6 +221,8 @@ def _draw_transmon(
         feature_radius: float = 10.0,
         pad_radius: float = 50.0,
         layer: LayerSpec = DEFAULT_LAYER,
+        junction_type: str = 'regular',
+        **junction_parameters
 ) -> gf.Component:
     """
     has three ports:
@@ -234,6 +266,8 @@ def _draw_transmon(
             feature_radius=feature_radius,
             pad_radius=pad_radius,
             layer=layer,
+            junction_type=junction_type,
+            **junction_parameters
         )
     else:
         transmon = _draw_transmon_with_sharp_edges(
@@ -246,6 +280,9 @@ def _draw_transmon(
             junction_length=junction_length,
             pad_radius=pad_radius,
             layer=layer,
+            junction_type=junction_type,
+            **junction_parameters
+
         )
 
     return transmon
@@ -289,12 +326,19 @@ def draw_transmon_with_antenna(
         junction_gap: float = 3.4,
         junction_length: float = 10,
         smooth_features: bool = True,
+        use_antenna: bool = True,
         feature_radius: float = 10.0,
         pad_radius: float = 50.0,
         antenna_length: float = 1400,
         antenna_width: float = 100,
         antenna_radius: float = 250,
-        layer: LayerSpec = DEFAULT_LAYER) -> gf.Component:
+        junction_type: str = 'regular',
+        layer: LayerSpec = DEFAULT_LAYER,
+        **junction_parameters
+
+) -> gf.Component:
+    c = gf.Component()
+
     transmon = _draw_transmon(pad_width=pad_width,
                               pad_height=pad_height,
                               pads_distance=pads_distance,
@@ -305,21 +349,24 @@ def draw_transmon_with_antenna(
                               smooth_features=smooth_features,
                               feature_radius=feature_radius,
                               pad_radius=pad_radius,
-                              layer=layer)
-
-    antenna = _draw_antenna(
-        antenna_length=antenna_length,
-        antenna_width=antenna_width,
-        antenna_radius=antenna_radius,
-        layer=layer
-    )
-
-    c = gf.Component()
+                              layer=layer,
+                              junction_type=junction_type,
+                              **junction_parameters
+                              )
 
     transmon = c << transmon
-    antenna = c << antenna
 
-    antenna.connect('start', transmon.ports['antenna_connection'], allow_width_mismatch=True)
+    if use_antenna:
+        antenna = _draw_antenna(
+            antenna_length=antenna_length,
+            antenna_width=antenna_width,
+            antenna_radius=antenna_radius,
+            layer=layer
+        )
+
+        antenna = c << antenna
+
+        antenna.connect('start', transmon.ports['antenna_connection'], allow_width_mismatch=True)
 
     ports = filter(lambda x: x.name != 'antenna_connection', transmon.ports)
     for port in ports:

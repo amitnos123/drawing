@@ -52,8 +52,8 @@ def meander_euler(
     waveguide = gf.path.extrude(path, cross_section)
 
     c.add_ref(waveguide)
-    start_port = gf.Port('e1', center=tuple(points[0].tolist()), layer=layer, width=wire_width, orientation=0)
-    end_port = gf.Port('e2', center=tuple(points[-1].tolist()), layer=layer, width=wire_width, orientation=180)
+    start_port = gf.Port('e1', center=tuple(points[0].tolist()), layer=layer, width=wire_width, orientation=180)
+    end_port = gf.Port('e2', center=tuple(points[-1].tolist()), layer=layer, width=wire_width, orientation=0)
     c.add_port('e1', port=start_port)
     c.add_port('e2', port=end_port)
 
