@@ -15,12 +15,14 @@ Coordinate = Tuple[float, float]
 Size = Tuple[float, float]
 
 DEFAULT_LAYER = (1, 0)
+JUNCTION_FOCUS_LAYER = (33, 0)
 DEFAULT_NUM_POINTS = 300
 
 
 @gf.cell
 def merge_referenced_shapes(
-    component: gf.Component, layer: LayerSpec = DEFAULT_LAYER
+    component: gf.Component,
+        layer: LayerSpec = DEFAULT_LAYER
 ) -> gf.Component:
     """
     Merges all referenced shapes in a component into a single component.

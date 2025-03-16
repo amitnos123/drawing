@@ -1,9 +1,11 @@
 from pydantic import BaseModel
 from typing_extensions import Literal
-from ...shared import DEFAULT_LAYER
+from ...shared import DEFAULT_LAYER, JUNCTION_FOCUS_LAYER
 from gdsfactory.typings import LayerSpec
 import gdsfactory as gf
 import gdsfactory.components as gc
+
+from .add_focus_bbox import add_focus_bbox
 
 
 class IrregularJunction(BaseModel):
@@ -24,6 +26,7 @@ class IrregularJunction(BaseModel):
     vertical_length: float = 6
     gap: float = 3
     layer: LayerSpec = DEFAULT_LAYER
+    junction_focus_layer: LayerSpec = JUNCTION_FOCUS_LAYER
 
     def connect_tapers_to_pads(self, left_pad, right_pad, left_taper, right_taper) -> None:
         """
@@ -68,6 +71,8 @@ class IrregularJunction(BaseModel):
         right_junction = w << right_junction
         right_junction.connect('e3', ref.ports['right_narrow_end'])
         w.add_port('right_arm', port=right_junction.ports['e1'])
+
+        add_focus_bbox(w, right_junction, left_junction, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
 
         return w
 

@@ -28,15 +28,15 @@ class IrregularJunction(BaseModel):
         ref = c << left_junction
 
         # left component
-        c.add_port('taper_connection', ref.ports['taper_connection'])
-        c.add_port('inward_connection', ref.ports['inward_connection'])
+        c.add_port('taper_connection', port=ref.ports['taper_connection'])
+        c.add_port('inward_connection', port=ref.ports['inward_connection'])
 
         w = gf.Component()
         ref = w << right_junction
 
         # right component
-        w.add_port('taper_connection', ref.ports['e4'])
-        w.add_port('inward_connection', ref.ports['e2'])
+        w.add_port('taper_connection', port=ref.ports['e4'])
+        w.add_port('inward_connection', port=ref.ports['e2'])
 
         return {'left': c, 'right': w}
 
@@ -52,8 +52,8 @@ class IrregularJunction(BaseModel):
         vertical_ref.connect('e2', horizontal_ref.ports['e1'], allow_width_mismatch=True)
         vertical_ref.move(vertical_ref.size_info.se, horizontal_ref.size_info.se)
 
-        c.add_port('taper_connection', horizontal_ref.ports['e2'])
-        c.add_port('inward_connection', vertical_ref.ports['e4'])
+        c.add_port('taper_connection', port=horizontal_ref.ports['e2'])
+        c.add_port('inward_connection', port=vertical_ref.ports['e4'])
 
         return c
 

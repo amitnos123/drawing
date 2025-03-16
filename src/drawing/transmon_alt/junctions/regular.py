@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 from typing_extensions import Literal
-from ...shared import DEFAULT_LAYER
+from ...shared import DEFAULT_LAYER, JUNCTION_FOCUS_LAYER
 from gdsfactory.typings import LayerSpec
 import gdsfactory as gf
 import gdsfactory.components as gc
+from .add_focus_bbox import add_focus_bbox
 
 
 class RegularJunction(BaseModel):
@@ -22,6 +23,7 @@ class RegularJunction(BaseModel):
     gap: float = 3
     length: float = 10
     layer: LayerSpec = DEFAULT_LAYER
+    junction_focus_layer: LayerSpec = JUNCTION_FOCUS_LAYER
 
     @staticmethod
     def connect_tapers_to_pads(left_pad, right_pad, left_taper, right_taper) -> None:
@@ -56,6 +58,7 @@ class RegularJunction(BaseModel):
 
         junction = gc.compass((length, self.width), layer=self.layer)
         w = gf.Component()
+
         ref = w << c
         left_ref = w << junction
         right_ref = w << junction
@@ -66,4 +69,9 @@ class RegularJunction(BaseModel):
         w.add_port('left_arm', port=left_ref.ports['e3'])
         w.add_port('right_arm', port=right_ref.ports['e1'])
         w.add_ports(c.ports)
+
+        # adding bbox around the junction at focus function layer
+        # using the two parts to make a rect
+        add_focus_bbox(w, right_ref, left_ref, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
+
         return w

@@ -22,7 +22,7 @@ if __name__ == "__main__":
     tr = TransmonConfig().build()
     # tr.pprint_ports()
     tr.draw_ports()
-    # tr.write_gds('gds_files\\testing.gds', with_metadata=False)
+    tr.write_gds('gds_files\\testing.gds', with_metadata=False)
     tr.plot()
     plt.show()
 

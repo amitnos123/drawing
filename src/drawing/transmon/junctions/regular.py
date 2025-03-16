@@ -20,15 +20,15 @@ class RegularJunction(BaseModel):
         ref = c << junction
 
         # left component
-        c.add_port('taper_connection', ref.ports['e2'])
-        c.add_port('inward_connection', ref.ports['e4'])
+        c.add_port('taper_connection', port=ref.ports['e2'])
+        c.add_port('inward_connection', port=ref.ports['e4'])
 
         w = gf.Component()
         ref = w << junction
 
         # left component
-        w.add_port('taper_connection', ref.ports['e4'])
-        w.add_port('inward_connection', ref.ports['e2'])
+        w.add_port('taper_connection', port=ref.ports['e4'])
+        w.add_port('inward_connection', port=ref.ports['e2'])
 
         return {'left': c, 'right': w}
 
