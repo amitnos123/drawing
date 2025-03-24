@@ -106,7 +106,7 @@ def parse_component_multi(component: gf.Component, config: ExportConfig):
     align_by_point = np.array(center)
 
     # Get current orientation
-    origin_angle = component.ports[config.port].orientation
+    origin_angle = component.ports[config.port].orientation / 180 * np.pi
     origin = np.array([np.cos(origin_angle), np.sin(origin_angle), 0])
     direction_to_vector = {
         "X": np.array([1, 0, 0]),
@@ -147,7 +147,8 @@ def parse_component_multi(component: gf.Component, config: ExportConfig):
         points = np.hstack((points, np.zeros((length_of_points, 1))))
 
         # Rotate
-        rotated_points = np.einsum('ij, kj -> ki', rotation, points)
+        rotated_points = np.round(np.einsum('ij, kj -> ki', rotation, points), decimals=10)
+        # rotated_points = points
         all_rotated_points.append(rotated_points)
 
     # Compute offset values and HFSS variables
