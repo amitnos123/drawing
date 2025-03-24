@@ -1,1 +1,1 @@
-from .transmon_alt import TransmonConfig
+from .transmon import TransmonConfig
