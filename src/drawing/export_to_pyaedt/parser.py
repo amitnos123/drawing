@@ -246,7 +246,7 @@ def parse_component(component: gf.Component, config: ExportConfig):
     points = np.hstack((points, np.zeros((length_of_points, 1))))
 
     # get current orientation
-    origin_angle = component.ports[config.port].orientation
+    origin_angle = component.ports[config.port].orientation / 180 * np.pi
     origin = np.array([np.cos(origin_angle), np.sin(origin_angle), 0])
     direction_to_vector = {
         "X": np.array([1, 0, 0]),
