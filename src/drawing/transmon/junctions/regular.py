@@ -66,8 +66,8 @@ class RegularJunction(BaseModel):
         left_ref.connect('e1', ref.ports['left_narrow_end'])
         right_ref.connect('e3', ref.ports['right_narrow_end'])
 
-        w.add_port('left_arm', port=left_ref.ports['e3'])
-        w.add_port('right_arm', port=right_ref.ports['e1'])
+        w.add_port('junction_left_arm', port=left_ref.ports['e3'])
+        w.add_port('junction_right_arm', port=right_ref.ports['e1'])
         w.add_ports(c.ports)
 
         # adding bbox around the junction at focus function layer
