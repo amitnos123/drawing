@@ -1,7 +1,7 @@
 from src.deprecated import meander
 from src.drawing.transmon import transmon
 import matplotlib.pyplot as plt
-from src.drawing.transmon_alt.transmon import TransmonConfig
+from src.drawing.transmon.transmon import TransmonConfig
 
 if __name__ == "__main__":
     # euler = meander.meander_euler()
