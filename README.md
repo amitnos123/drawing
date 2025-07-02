@@ -15,7 +15,7 @@ This configuration simplifies complex layout creation by automatically handling 
 ## Installation
    ```bash
    git clone https://github.com/HutoriHunzu/drawing.git
-   pip install -e <PATH_TO_DRAWING_LIB>
+   pip install -e drawing
 ```
 
 ## Usage
@@ -47,7 +47,8 @@ for example:
 ```python
 
 import matplotlib.pyplot as plt
-from drawing import TransmonConfig, IntegrationConfig
+from drawing import TransmonConfig
+from drawing.transmon import IntegrationConfig
 # Build the transmon layout
 integration_config = IntegrationConfig(use_antenna=False)
 tr = TransmonConfig(integration_config=integration_config).build()
