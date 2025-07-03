@@ -217,8 +217,10 @@ Attributes:
 ## Types
 
 ### Layer
+```python
 Layer: TypeAlias = tuple[int, int]
 LayerSpec: TypeAlias = Layer | str | int | LayerEnum
 
 DEFAULT_LAYER = (1, 0)
 JUNCTION_FOCUS_LAYER = (33, 0)
+```
