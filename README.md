@@ -181,15 +181,11 @@ class RegularJunction(BaseModel):
 Configuration for creating a regular junction between tapers in a transmon layout.
 
 * Attributes:
-
 * type (Literal['regular']): Fixed type for a regular junction.
-
+   Literal['regular'] only allowed the value 'regular'. Hence type is a constant.
 * width (float): Junction width.
-
 * gap (float): Gap between the connected tapers.
-
 * length (float): Nominal length for the junction.
-
 * layer (LayerSpec): GDS layer specification.
 
 ### IrregularJunction
@@ -208,6 +204,7 @@ Configuration for creating an irregular junction between tapers in a transmon la
 
 Attributes:
 *  type (Literal['irregular']): Fixed type for the irregular junction.
+   Literal['irregular'] only allowed the value 'irregular'. Hence type is a constant. 
 *  width (float): Width of the junction.
 *  thickness (float): Thickness parameter for the asymmetric elbow shape.
 *  vertical_length (float): Vertical length for the elbow shape.
