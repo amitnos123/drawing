@@ -180,7 +180,7 @@ class RegularJunction(BaseModel):
 ```
 Configuration for creating a regular junction between tapers in a transmon layout.
 
-* Attributes:
+Attributes:
 * type (Literal['regular']): Fixed type for a regular junction.
    Literal['regular'] only allowed the value 'regular'. Hence type is a constant.
 * width (float): Junction width.
