@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from drawing.transmon.junctions.base_junction import BaseJunction
 from typing_extensions import Literal
 from ...shared import DEFAULT_LAYER, JUNCTION_FOCUS_LAYER
 from gdsfactory.typings import LayerSpec
@@ -8,7 +8,7 @@ import gdsfactory.components as gc
 from .add_focus_bbox import add_focus_bbox
 
 
-class IrregularJunction(BaseModel):
+class IrregularJunction(BaseJunction):
     """
     Configuration for creating an irregular junction between tapers in a transmon layout.
 
@@ -38,8 +38,9 @@ class IrregularJunction(BaseModel):
             left_taper: Taper connecting to the left pad.
             right_taper: Taper connecting to the right pad.
         """
-        left_taper.connect('wide_end', left_pad.ports['e3'], allow_width_mismatch=True)
-        right_taper.connect('wide_end', right_pad.ports['e1'], allow_width_mismatch=True)
+        # left_taper.connect('wide_end', left_pad.ports['e3'], allow_width_mismatch=True)
+        # right_taper.connect('wide_end', right_pad.ports['e1'], allow_width_mismatch=True)
+        super().connect_tapers_to_pads(left_pad, right_pad, left_taper, right_taper)
         right_taper.dmovey(-self.vertical_length / 2)
 
     def build(self, c: gf.Component) -> gf.Component:
