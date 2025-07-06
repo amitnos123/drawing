@@ -90,6 +90,9 @@ class IrregularJunction(BaseJunction):
         # Create port pointing to center of the junction
         w.add_port('right_arm', port=right_junction.ports['e1'])
 
+        # Add original ports from preview components
+        w.add_ports(c.ports)
+
         # Adds a bounding box around the junction
         add_focus_bbox(w, right_junction, left_junction, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
 
