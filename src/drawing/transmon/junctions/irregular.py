@@ -56,19 +56,15 @@ class IrregularJunction(BaseJunction):
         Returns:
             gf.Component: A component representing the complete irregular junction.
         """
-        # Distance between tapers narrow ends
-        left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
-                                    c.ports['left_narrow_end'].center[0])
-        
-        # Effective length each the junction arms
-        length = (left_to_right_distance_x - self.gap) / 2
+        # Calculate the length of each arm
+        arm_length = (self.total_length(c) - self.gap) / 2
 
         # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
         # size: Tuple[float, float] rectangle size 
-        right_junction = gc.compass(size=(length, self.width), layer=self.layer)
+        right_junction = gc.compass(size=(arm_length, self.width), layer=self.layer)
 
         # Create L arm shape
-        left_junction = self._build_asymmetric_elbow_shape(length)
+        left_junction = self._build_asymmetric_elbow_shape(arm_length)
 
         # Combining Component
         w = gf.Component()

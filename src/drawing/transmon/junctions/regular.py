@@ -38,11 +38,12 @@ class RegularJunction(BaseJunction):
         Returns:
             gf.Component: The complete regular junction component.
         """
-        left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
-                                    c.ports['left_narrow_end'].center[0])
-        length = (left_to_right_distance_x - self.gap) / 2
+        # Calculate the length of each arm
+        arm_length = (self.total_length(c) - self.gap) / 2
 
-        junction = gc.compass((length, self.width), layer=self.layer)
+        # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
+        # size: Tuple[float, float] rectangle size 
+        junction = gc.compass((arm_length, self.width), layer=self.layer)
 
         # Combining Component
         w = gf.Component()
