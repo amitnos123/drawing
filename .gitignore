@@ -1,1 +1,4 @@
- */__pycache__/*
+src/drawing/__pycache__/*
+src/drawing/shared/__pycache__/*
+src/drawing/transmon/__pycache__/*
+src/drawing/transmon/junctions/__pycache__/*
