@@ -47,8 +47,7 @@ for example:
 ```python
 
 import matplotlib.pyplot as plt
-from drawing import TransmonConfig
-from drawing.transmon import IntegrationConfig
+from drawing import TransmonConfig, IntegrationConfig
 # Build the transmon layout
 integration_config = IntegrationConfig(use_antenna=False)
 tr = TransmonConfig(integration_config=integration_config).build()
