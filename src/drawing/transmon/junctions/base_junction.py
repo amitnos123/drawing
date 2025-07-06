@@ -32,3 +32,13 @@ class BaseJunction(BaseModel):
 
     def build(self, c: gf.Component) -> gf.Component:
         raise NameError("Junction build method is not defined.") # "BaseJunction is a virtual class and should not be instantiated directly."
+
+    def validate(self) -> None:
+        """
+        Validates the junction configuration.
+
+        Raises:
+            ValueError: If the layer is not set.
+        """
+        if not self.layer:
+            raise ValueError("Layer must be specified for the junction.")

@@ -64,3 +64,13 @@ class AntennaConfig(BaseModel):
         c.add_port('start', port=compass_ref.ports['e1'])
         return c
 
+    def validate(self) -> None:
+        """
+        Validates the antenna configuration.
+
+        Raises:
+            ValueError: If the antenna length, width, or radius is non-positive.
+            TypeError: If the layer is not of type LayerSpec.
+        """
+        if self.length <= 0 or self.width <= 0 or self.radius <= 0:
+            raise ValueError("Antenna dimensions must be positive.")

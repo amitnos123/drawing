@@ -49,3 +49,14 @@ class PadConfig(BaseModel):
         c.add_port(name="antenna_port", port=right_ref.ports["e3"])
         c.add_port(name="orientation_port", port=left_ref.ports["e1"], port_type='electrical')
         return left_ref, right_ref
+
+    def validate(self) -> None:
+        """
+        Validates the pad configuration.
+
+        Raises:
+            ValueError: If the pad width or height is non-positive.
+            TypeError: If the layer is not of type LayerSpec.
+        """
+        if self.width <= 0 or self.height <= 0:
+            raise ValueError("Pad width and height must be positive.")

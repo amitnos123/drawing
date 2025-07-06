@@ -9,7 +9,8 @@ import gdsfactory.components as gc
 from ..shared import DEFAULT_LAYER, smooth_corners, merge_referenced_shapes
 from typing import TypeVar, Type
 import matplotlib.pyplot as plt
-
+from typing_extensions import Self
+from pydantic import model_validator
 
 
 class IntegrationConfig(BaseModel):
@@ -64,6 +65,7 @@ class TransmonConfig(BaseModel):
     junction: SupportedJunctions = RegularJunction()
     antenna: AntennaConfig = AntennaConfig()
     layer: LayerSpec = DEFAULT_LAYER
+    validate_assignment: bool = True
 
     def build(self) -> gf.Component:
         """
@@ -195,3 +197,57 @@ class TransmonConfig(BaseModel):
         nested_dict['junction']['type'] = nested_dict['junction'].get('type', 'regular')
         return TransmonConfig(**nested_dict)
 
+    @model_validator(mode='after')
+    def validate_components(self) -> Self:
+        """
+        Validates the configuration of the transmon components.
+        This method checks the parameters of the pad, taper, junction, and antenna components
+        to ensure they meet the required conditions for a valid transmon layout.
+        Raises:
+            ValueError: If any of the validation checks fail.
+        """
+        # Skip validation if validate_assignment is False
+        if not self.validate_assignment:
+            return self
+        
+        # Validate individual components
+        self.pad.validate()
+        self.taper.validate()
+        self.junction.validate()
+        self.antenna.validate()
+
+        # pad-taper validation
+        #-------------------------------------------------------------------
+        if self.pad.distance < self.taper.length * 2:
+            raise ValueError(
+                f"Pad distance {self.pad.distance} must be greater than the taper length (2x) {self.taper.length * 2} "
+            )
+        
+        if self.pad.width < self.taper.narrow_width:
+            raise ValueError(
+                f"Pad width {self.pad.width} must be greater than the taper narrow width {self.taper.narrow_width}"
+            )
+        
+        # taper-taper validation
+        #-------------------------------------------------------------------
+        if self.taper.wide_width < self.taper.narrow_width:
+            raise ValueError(
+                f"Taper wide width {self.taper.wide_width} must be greater than the taper narrow width {self.taper.narrow_width}"
+            )
+        
+
+        # taper-junction validation
+        #-------------------------------------------------------------------
+        if self.taper.narrow_width < self.junction.width:
+            raise ValueError(
+                f"Taper narrow width {self.taper.narrow_width} must be greater than the junction width {self.junction.width}"
+            )
+        
+        # pads-taper-junction validation
+        #-------------------------------------------------------------------
+        if self.pad.distance < self.junction.length + self.taper.length * 2:
+            raise ValueError(
+                f"Pad distance {self.pad.distance} must be greater than the junction length {self.junction.length} "
+                f"plus taper length (2x) {self.taper.length * 2}"
+            )
+        return self

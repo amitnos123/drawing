@@ -66,3 +66,18 @@ class TaperConfig(BaseModel):
         left_ref = c << straight_end_taper
         right_ref = c << straight_end_taper
         return left_ref, right_ref
+
+    def validate(self):
+        """
+        Validates the taper configuration.
+
+        This method checks if the configuration parameters are valid.
+        """
+        if self.length <= 0 or self.wide_width <= 0 or self.narrow_width <= 0:
+            raise ValueError(
+                "Taper length and widths must be positive values."
+            )
+        if self.wide_width < self.narrow_width:
+            raise ValueError(
+                "Wide width must be greater than or equal to narrow width."
+            )
