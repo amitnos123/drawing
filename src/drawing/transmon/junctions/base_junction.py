@@ -12,7 +12,6 @@ class BaseJunction(BaseModel):
     Virtual Class for creating junction classes between tapers in a transmon layout.
 
     Attributes:
-        length (float): Nominal length for the junction.
         layer (LayerSpec): GDS layer specification.
     """
     layer: LayerSpec = DEFAULT_LAYER

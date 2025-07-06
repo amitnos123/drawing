@@ -25,19 +25,6 @@ class RegularJunction(BaseJunction):
     layer: LayerSpec = DEFAULT_LAYER
     junction_focus_layer: LayerSpec = JUNCTION_FOCUS_LAYER
 
-    # def connect_tapers_to_pads(self, left_pad, right_pad, left_taper, right_taper) -> None:
-    #     """
-    #     Connects tapers to pads for a regular junction.
-
-    #     Args:
-    #         left_pad: Left pad component.
-    #         right_pad: Right pad component.
-    #         left_taper: Taper connecting to the left pad.
-    #         right_taper: Taper connecting to the right pad.
-    #     """
-    #     left_taper.connect('wide_end', left_pad.ports['e3'], allow_width_mismatch=True)
-    #     right_taper.connect('wide_end', right_pad.ports['e1'], allow_width_mismatch=True)
-
     def build(self, c: gf.Component) -> gf.Component:
         """
         Builds the regular junction by placing and connecting junction copies.
