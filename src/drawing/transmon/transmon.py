@@ -82,9 +82,10 @@ class TransmonConfig(BaseModel):
         """
         c = gf.Component()
 
-        # Build pads and tapers
+        # Build pads 
         left_pad, right_pad = self.pad.build(c)
 
+        # Build tapers
         left_taper, right_taper = self.taper.build(c)
 
 

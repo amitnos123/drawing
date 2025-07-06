@@ -25,6 +25,7 @@ class TaperConfig(BaseModel):
     extra_length: float = 5
     layer: LayerSpec = DEFAULT_LAYER
 
+    # single taper
     def _build(self) -> gf.Component:
         """
         Constructs the taper shape by combining a taper and an additional compass.
@@ -41,13 +42,25 @@ class TaperConfig(BaseModel):
             layer=self.layer,
         )
 
-        compass = gc.compass((self.extra_length, self.narrow_width), layer=self.layer)
+        # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
+        # size: Tuple[float, float] rectangle size 
+        compass = gc.compass(size=(self.extra_length, self.narrow_width), layer=self.layer)
+        
+        # Will hold both Taper & Compass
         c = gf.Component()
+
+        # Create taper and compass
         taper_ref = c << taper
         compass_ref = c << compass
+        
+        # Connect the taper to the compass
         compass_ref.connect('e1', taper_ref.ports['narrow_end'])
+        
+        # Add ports for connecting to pad and junction
         c.add_port(name='wide_end', port=taper_ref.ports['wide_end'])
         c.add_port(name='narrow_end', port=compass_ref.ports['e3'])
+        
+        # Taper + Compass connected
         return c
 
     def build(self, c: gf.Component) -> tuple:
@@ -63,8 +76,12 @@ class TaperConfig(BaseModel):
             tuple: A tuple containing references to the left and right taper components.
         """
         straight_end_taper = self._build()
+        
+        # Create the tapers
         left_ref = c << straight_end_taper
         right_ref = c << straight_end_taper
+
+        # Return references to the left and right tapers
         return left_ref, right_ref
 
     def validate(self):

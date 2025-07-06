@@ -42,12 +42,18 @@ class PadConfig(BaseModel):
         if self.radius > 0:
             pad = smooth_corners(pad, radius=self.radius, layer=self.layer)
 
+        # Create left and right pads
         left_ref = c << pad
         right_ref = c << pad
+
+        # Position the pads
         right_ref.dmovex(self.distance + self.width)
 
-        c.add_port(name="antenna_port", port=right_ref.ports["e3"])
-        c.add_port(name="orientation_port", port=left_ref.ports["e1"], port_type='electrical')
+        # Set ports for the pads
+        c.add_port(name="antenna_port", port=right_ref.ports["e3"]) # Port for connecting the antenna
+        c.add_port(name="orientation_port", port=left_ref.ports["e1"], port_type='electrical') # Port for orientation
+        
+        # Return references to the left and right pads
         return left_ref, right_ref
 
     def validate(self) -> None:
