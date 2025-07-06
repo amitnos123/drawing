@@ -1,3 +1,4 @@
+from drawing.transmon.junctions.base_junction import BaseJunction
 from .pads import PadConfig
 from .tapers import TaperConfig
 from .antenna import AntennaConfig
@@ -62,7 +63,7 @@ class TransmonConfig(BaseModel):
     integration_config: IntegrationConfig = IntegrationConfig()
     pad: PadConfig = PadConfig()
     taper: TaperConfig = TaperConfig()
-    junction: SupportedJunctions = RegularJunction()
+    junction: BaseJunction = RegularJunction()
     antenna: AntennaConfig = AntennaConfig()
     layer: LayerSpec = DEFAULT_LAYER
     validate_assignment: bool = True
@@ -246,7 +247,7 @@ class TransmonConfig(BaseModel):
         
         # pads-taper-junction validation
         #-------------------------------------------------------------------
-        if self.pad.distance < self.junction.length + self.taper.length * 2:
+        if self.pad.distance < self.junction.length + self.junction.gap + self.taper.length * 2:
             raise ValueError(
                 f"Pad distance {self.pad.distance} must be greater than the junction length {self.junction.length} "
                 f"plus taper length (2x) {self.taper.length * 2}"
