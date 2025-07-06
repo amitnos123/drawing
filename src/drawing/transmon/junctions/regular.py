@@ -43,21 +43,27 @@ class RegularJunction(BaseJunction):
         length = (left_to_right_distance_x - self.gap) / 2
 
         junction = gc.compass((length, self.width), layer=self.layer)
+
+        # Combining Component
         w = gf.Component()
 
+        # Insert every preview component
         ref = w << c
+        # Create arms
         left_ref = w << junction
         right_ref = w << junction
 
+        # Connect arms to their respective tapers
         left_ref.connect('e1', ref.ports['left_narrow_end'])
         right_ref.connect('e3', ref.ports['right_narrow_end'])
 
+        # Add ports to arm
         w.add_port('junction_left_arm', port=left_ref.ports['e3'])
         w.add_port('junction_right_arm', port=right_ref.ports['e1'])
         w.add_ports(c.ports)
 
-        # adding bbox around the junction at focus function layer
-        # using the two parts to make a rect
+        # Adds a bounding box around the junction
         add_focus_bbox(w, right_ref, left_ref, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
 
+        # Return combined component
         return w

@@ -56,23 +56,45 @@ class IrregularJunction(BaseJunction):
         Returns:
             gf.Component: A component representing the complete irregular junction.
         """
+        # Distance between tapers narrow ends
         left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
                                     c.ports['left_narrow_end'].center[0])
+        
+        # Effective length each the junction arms
         length = (left_to_right_distance_x - self.gap) / 2
 
-        right_junction = gc.compass((length, self.width), layer=self.layer)
+        # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
+        # size: Tuple[float, float] rectangle size 
+        right_junction = gc.compass(size=(length, self.width), layer=self.layer)
+
+        # Create L arm shape
         left_junction = self._build_asymmetric_elbow_shape(length)
 
+        # Combining Component
         w = gf.Component()
+
+        # Insert every preview component
         ref = w << c
+
+        # Create left arm
         left_junction = w << left_junction
+        
+        # Connect left arm toright taper
         left_junction.connect('taper_connection', ref.ports['left_narrow_end'])
+        
+        # Create port pointing to center of the junction
         w.add_port('left_arm', port=left_junction.ports['inward_connection'])
 
+        # Create right arm
         right_junction = w << right_junction
+
+        # Connect right arm toright taper
         right_junction.connect('e3', ref.ports['right_narrow_end'])
+
+        # Create port pointing to center of the junction
         w.add_port('right_arm', port=right_junction.ports['e1'])
 
+        # Adds a bounding box around the junction
         add_focus_bbox(w, right_junction, left_junction, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
 
         return w
@@ -89,16 +111,25 @@ class IrregularJunction(BaseJunction):
         Returns:
             gf.Component: The asymmetric elbow component.
         """
-        horizontal = gc.compass((length, self.width), layer=self.layer)
-        vertical = gc.compass((self.thickness, self.vertical_length), layer=self.layer)
+        # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
+        # size: Tuple[float, float] rectangle size 
+        horizontal = gc.compass(size=(length, self.width), layer=self.layer)
+        vertical = gc.compass(size=(self.thickness, self.vertical_length), layer=self.layer)
 
+        # Combining Component
         c = gf.Component()
+        # Combine
         horizontal_ref = c << horizontal
         vertical_ref = c << vertical
 
+        # Connect the horizontal and vertical components
         vertical_ref.connect('e2', horizontal_ref.ports['e4'], allow_width_mismatch=True)
+        # Move the vertical component to the correct position
         vertical_ref.move(vertical_ref.size_info.ne, horizontal_ref.size_info.ne)
 
+        # Add ports for connections
         c.add_port('taper_connection', port=horizontal_ref.ports['e1'])
         c.add_port('inward_connection', port=vertical_ref.ports['e4'])
+
+        # return combined component
         return c

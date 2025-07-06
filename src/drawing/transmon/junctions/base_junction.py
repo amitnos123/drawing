@@ -27,6 +27,7 @@ class BaseJunction(BaseModel):
             left_taper: Taper connecting to the left pad.
             right_taper: Taper connecting to the right pad.
         """
+        # Connect the wide ends of the tapers to the respective pads
         left_taper.connect('wide_end', left_pad.ports['e3'], allow_width_mismatch=True)
         right_taper.connect('wide_end', right_pad.ports['e1'], allow_width_mismatch=True)
 
