@@ -169,6 +169,17 @@ Attributes:
 
 ### RegularJunction
 ```python
+class BaseJunction(BaseModel):
+    layer: LayerSpec = DEFAULT_LAYER
+    junction_focus_layer: LayerSpec = JUNCTION_FOCUS_LAYER
+```
+Virtual Class for creating junction classes between tapers in a transmon layout.
+
+Attributes:
+* layer (LayerSpec): GDS layer specification.
+
+### RegularJunction
+```python
 class RegularJunction(BaseModel):
     type: Literal['regular'] = 'regular'
     width: float = 1

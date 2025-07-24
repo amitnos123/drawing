@@ -34,8 +34,12 @@ class AntennaConfig(BaseModel):
         Args:
             c (gf.Component): The component to which the antenna is added.
         """
+        # Draw the antenna shape
         antenna = self._draw()
+        # Create the antenna
         ref = c << antenna
+
+        # Connect the antenna's start port to antenna_port port
         ref.connect('start', c.ports["antenna_port"], allow_width_mismatch=True)
 
     @merge_decorator
@@ -47,12 +51,17 @@ class AntennaConfig(BaseModel):
             gf.Component: A component representing the antenna.
         """
         c = gf.Component()
-        compass = gc.compass((self.length, self.width), layer=DEFAULT_LAYER)
+
+        # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
+        # size: Tuple[float, float] rectangle size 
+        compass = gc.compass(size=(self.length, self.width), layer=DEFAULT_LAYER)
         circle = gc.circle(radius=self.radius, layer=DEFAULT_LAYER)
 
+        # Create compass and circle
         compass_ref = c << compass
         circle_ref = c << circle
 
+        # Create a port for the circle
         circle_port = gf.Port(
             name='circle_port',
             center=circle_ref.center,
@@ -60,7 +69,23 @@ class AntennaConfig(BaseModel):
             width=self.width,
             orientation=180
         )
+
+        # Connect the circle to the compass
         compass_ref.connect("e3", circle_port, allow_type_mismatch=True)
+
+        # Create the antenna's start port
         c.add_port('start', port=compass_ref.ports['e1'])
+
+        # return the component with the antenna shape
         return c
 
+    def validate(self) -> None:
+        """
+        Validates the antenna configuration.
+
+        Raises:
+            ValueError: If the antenna length, width, or radius is non-positive.
+            TypeError: If the layer is not of type LayerSpec.
+        """
+        if self.length <= 0 or self.width <= 0 or self.radius <= 0:
+            raise ValueError("Antenna dimensions must be positive.")

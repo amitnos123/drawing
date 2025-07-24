@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from drawing.transmon.junctions.base_junction import BaseJunction
 from typing_extensions import Literal
 from ...shared import DEFAULT_LAYER, JUNCTION_FOCUS_LAYER
 from gdsfactory.typings import LayerSpec
@@ -7,7 +7,7 @@ import gdsfactory.components as gc
 from .add_focus_bbox import add_focus_bbox
 
 
-class RegularJunction(BaseModel):
+class RegularJunction(BaseJunction):
     """
     Configuration for creating a regular junction between tapers in a transmon layout.
 
@@ -25,20 +25,6 @@ class RegularJunction(BaseModel):
     layer: LayerSpec = DEFAULT_LAYER
     junction_focus_layer: LayerSpec = JUNCTION_FOCUS_LAYER
 
-    @staticmethod
-    def connect_tapers_to_pads(left_pad, right_pad, left_taper, right_taper) -> None:
-        """
-        Connects tapers to pads for a regular junction.
-
-        Args:
-            left_pad: Left pad component.
-            right_pad: Right pad component.
-            left_taper: Taper connecting to the left pad.
-            right_taper: Taper connecting to the right pad.
-        """
-        left_taper.connect('wide_end', left_pad.ports['e3'], allow_width_mismatch=True)
-        right_taper.connect('wide_end', right_pad.ports['e1'], allow_width_mismatch=True)
-
     def build(self, c: gf.Component) -> gf.Component:
         """
         Builds the regular junction by placing and connecting junction copies.
@@ -52,26 +38,33 @@ class RegularJunction(BaseModel):
         Returns:
             gf.Component: The complete regular junction component.
         """
-        left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
-                                    c.ports['left_narrow_end'].center[0])
-        length = (left_to_right_distance_x - self.gap) / 2
+        # Calculate the length of each arm
+        arm_length = (self.total_length(c) - self.gap) / 2
 
-        junction = gc.compass((length, self.width), layer=self.layer)
+        # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
+        # size: Tuple[float, float] rectangle size 
+        junction = gc.compass((arm_length, self.width), layer=self.layer)
+
+        # Combining Component
         w = gf.Component()
 
+        # Insert every preview component
         ref = w << c
+        # Create arms
         left_ref = w << junction
         right_ref = w << junction
 
+        # Connect arms to their respective tapers
         left_ref.connect('e1', ref.ports['left_narrow_end'])
         right_ref.connect('e3', ref.ports['right_narrow_end'])
 
+        # Add ports to arm
         w.add_port('junction_left_arm', port=left_ref.ports['e3'])
         w.add_port('junction_right_arm', port=right_ref.ports['e1'])
         w.add_ports(c.ports)
 
-        # adding bbox around the junction at focus function layer
-        # using the two parts to make a rect
+        # Adds a bounding box around the junction
         add_focus_bbox(w, right_ref, left_ref, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
 
+        # Return combined component
         return w
