@@ -55,8 +55,9 @@ class RegularJunction(BaseJunction):
         right_ref = w << junction
 
         # Connect arms to their respective tapers
-        left_ref.connect('e1', ref.ports['left_narrow_end'], allow_width_mismatch=True)
-        right_ref.connect('e3', ref.ports['right_narrow_end'], allow_width_mismatch=True)
+        # left_ref.connect('e1', ref.ports['left_narrow_end'], allow_width_mismatch=True, allow_layer_mismatch=True)
+        # right_ref.connect('e3', ref.ports['right_narrow_end'], allow_width_mismatch=True, allow_layer_mismatch=True)
+        self.conntect_to_tapers(left_ref, right_ref, ref.ports['left_narrow_end'], ref.ports['right_narrow_end'])
 
         # Add ports to arm
         w.add_port('junction_left_arm', port=left_ref.ports['e3'])

@@ -1,3 +1,5 @@
+from typing import Any
+from kfactory import DInstance, ProtoPort
 from pydantic import BaseModel
 from typing_extensions import Literal
 from ...shared import DEFAULT_LAYER, JUNCTION_FOCUS_LAYER
@@ -30,6 +32,17 @@ class BaseJunction(BaseModel):
         # Connect the wide ends of the tapers to the respective pads
         left_taper.connect('wide_end', left_pad.ports['e3'], allow_width_mismatch=True)
         right_taper.connect('wide_end', right_pad.ports['e1'], allow_width_mismatch=True)
+
+    def conntect_to_tapers(self,
+                           left_ref: DInstance,
+                           right_ref: DInstance,
+                           port_left_narrow_end: ProtoPort[Any] | None = None,
+                           port_right_narrow_end: ProtoPort[Any] | None = None,
+                           port_left: str | ProtoPort[Any] | None = 'e1',
+                           port_right: str | ProtoPort[Any] | None = 'e3') -> None:
+        left_ref.connect(port_left, port_left_narrow_end, allow_width_mismatch=True, allow_layer_mismatch=True)
+        right_ref.connect(port_right, port_right_narrow_end, allow_width_mismatch=True, allow_layer_mismatch=True)
+
 
     def build(self, c: gf.Component) -> gf.Component:
         raise NameError("Junction build method is not defined.") # "BaseJunction is a virtual class and should not be instantiated directly."
