@@ -57,7 +57,7 @@ class BaseJunction(BaseModel):
         if not self.layer:
             raise ValueError("Layer must be specified for the junction.")
         
-    def total_length(self, c: gf.Component) -> float:
+    def total_length(self, c: gf.Component, leftPortName = 'left_narrow_end', rightPortName = 'right_narrow_end') -> float:
         """
         Calculates the total length of the junction based on the component's ports.
 
@@ -67,6 +67,9 @@ class BaseJunction(BaseModel):
         Returns:
             float: Total length of the junction.
         """
-        left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
-                                    c.ports['left_narrow_end'].center[0])
+        if leftPortName not in c.ports or rightPortName not in c.ports:
+            return self.length
+        
+        left_to_right_distance_x = (c.ports[leftPortName].center[0] -
+                                    c.ports[rightPortName].center[0])
         return left_to_right_distance_x
