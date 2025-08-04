@@ -76,7 +76,7 @@ class IrregularJunction(BaseJunction):
         left_junction = w << left_junction
         
         # Connect left arm toright taper
-        left_junction.connect('taper_connection', ref.ports['left_narrow_end'])
+        # left_junction.connect('taper_connection', ref.ports['left_narrow_end'])
         
         # Create port pointing to center of the junction
         w.add_port('left_arm', port=left_junction.ports['inward_connection'])
@@ -85,7 +85,15 @@ class IrregularJunction(BaseJunction):
         right_junction = w << right_junction
 
         # Connect right arm toright taper
-        right_junction.connect('e3', ref.ports['right_narrow_end'])
+        # right_junction.connect('e3', ref.ports['right_narrow_end'])
+        self.connect_tapers_to_pads(
+            left_pad=left_junction,
+            right_pad=right_junction,
+            left_taper=ref.ports['left_narrow_end'],
+            right_taper=ref.ports['right_narrow_end'],
+            port_left='taper_connection',
+            port_right='e3',
+        )
 
         # Create port pointing to center of the junction
         w.add_port('right_arm', port=right_junction.ports['e1'])

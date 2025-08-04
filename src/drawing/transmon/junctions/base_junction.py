@@ -1,3 +1,5 @@
+from typing import Any
+from kfactory import DInstance, ProtoPort
 from pydantic import BaseModel
 from typing_extensions import Literal
 from ...shared import DEFAULT_LAYER, JUNCTION_FOCUS_LAYER
@@ -31,6 +33,17 @@ class BaseJunction(BaseModel):
         left_taper.connect('wide_end', left_pad.ports['e3'], allow_width_mismatch=True)
         right_taper.connect('wide_end', right_pad.ports['e1'], allow_width_mismatch=True)
 
+    def conntect_to_tapers(self,
+                           left_ref: DInstance,
+                           right_ref: DInstance,
+                           port_left_narrow_end: ProtoPort[Any] | None = None,
+                           port_right_narrow_end: ProtoPort[Any] | None = None,
+                           port_left: str | ProtoPort[Any] | None = 'e1',
+                           port_right: str | ProtoPort[Any] | None = 'e3') -> None:
+        left_ref.connect(port_left, port_left_narrow_end, allow_width_mismatch=True, allow_layer_mismatch=True)
+        right_ref.connect(port_right, port_right_narrow_end, allow_width_mismatch=True, allow_layer_mismatch=True)
+
+
     def build(self, c: gf.Component) -> gf.Component:
         raise NameError("Junction build method is not defined.") # "BaseJunction is a virtual class and should not be instantiated directly."
 
@@ -44,7 +57,7 @@ class BaseJunction(BaseModel):
         if not self.layer:
             raise ValueError("Layer must be specified for the junction.")
         
-    def total_length(self, c: gf.Component) -> float:
+    def total_length(self, c: gf.Component, leftPortName = 'left_narrow_end', rightPortName = 'right_narrow_end') -> float:
         """
         Calculates the total length of the junction based on the component's ports.
 
@@ -54,6 +67,9 @@ class BaseJunction(BaseModel):
         Returns:
             float: Total length of the junction.
         """
-        left_to_right_distance_x = (c.ports['right_narrow_end'].center[0] -
-                                    c.ports['left_narrow_end'].center[0])
+        if leftPortName not in c.ports or rightPortName not in c.ports:
+            return self.length
+        
+        left_to_right_distance_x = (c.ports[leftPortName].center[0] -
+                                    c.ports[rightPortName].center[0])
         return left_to_right_distance_x

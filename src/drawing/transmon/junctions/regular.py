@@ -25,7 +25,7 @@ class RegularJunction(BaseJunction):
     layer: LayerSpec = DEFAULT_LAYER
     junction_focus_layer: LayerSpec = JUNCTION_FOCUS_LAYER
 
-    def build(self, c: gf.Component) -> gf.Component:
+    def build(self, c: gf.Component, leftPortName = 'left_narrow_end', rightPortName = 'right_narrow_end', focus_box = True) -> gf.Component:
         """
         Builds the regular junction by placing and connecting junction copies.
 
@@ -39,7 +39,7 @@ class RegularJunction(BaseJunction):
             gf.Component: The complete regular junction component.
         """
         # Calculate the length of each arm
-        arm_length = (self.total_length(c) - self.gap) / 2
+        arm_length = (self.total_length(c, leftPortName=leftPortName, rightPortName=rightPortName) - self.gap) / 2
 
         # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
         # size: Tuple[float, float] rectangle size 
@@ -55,16 +55,20 @@ class RegularJunction(BaseJunction):
         right_ref = w << junction
 
         # Connect arms to their respective tapers
-        left_ref.connect('e1', ref.ports['left_narrow_end'])
-        right_ref.connect('e3', ref.ports['right_narrow_end'])
+        if leftPortName in ref.ports and rightPortName in ref.ports:
+            self.conntect_to_tapers(left_ref, right_ref, ref.ports[leftPortName], ref.ports[rightPortName])
+        else:
+            left_ref.dmovex(-(arm_length + self.gap) / 2)
+            right_ref.dmovex((arm_length + self.gap) / 2)
 
         # Add ports to arm
         w.add_port('junction_left_arm', port=left_ref.ports['e3'])
         w.add_port('junction_right_arm', port=right_ref.ports['e1'])
         w.add_ports(c.ports)
 
-        # Adds a bounding box around the junction
-        add_focus_bbox(w, right_ref, left_ref, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
+        if focus_box:
+            # Adds a bounding box around the junction
+            add_focus_bbox(w, right_ref, left_ref, ref_layer=self.layer, junction_layer=self.junction_focus_layer)
 
         # Return combined component
         return w
