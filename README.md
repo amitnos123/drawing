@@ -221,6 +221,25 @@ Attributes:
 *  gap (float): Gap between junction components.
 *  layer (LayerSpec): GDS layer specification.
 
+### SquidConfig
+```python
+    flux_hole_width: float = 1
+    flux_hole_length: float = 5
+    top_junction: BaseJunction = RegularJunction()
+    bottom_junction: BaseJunction = RegularJunction()
+    layer: LayerSpec = DEFAULT_LAYER
+```
+
+Configuration for a squid component.
+
+Attributes:
+*  flux_hole_width (float): Width of the flux hole.
+*  flux_hole_length (float): Length of the flux hole.
+*  top_junction (BaseJunction): Junction at the top of the squid.
+*  bottom_junction (BaseJunction): Junction at the bottom of the squid.
+*  layer (LayerSpec): Layer specification for the squid component.
+  
+  
 ## Types
 
 ### Layer

@@ -8,7 +8,13 @@ from ..transmon.junctions.base_junction import BaseJunction
 
 
 class SquidConfig(BaseModel):
-    """
+    """Configuration for a squid component.
+    Attributes:
+        flux_hole_width (float): Width of the flux hole.
+        flux_hole_length (float): Length of the flux hole.
+        top_junction (BaseJunction): Junction at the top of the squid.
+        bottom_junction (BaseJunction): Junction at the bottom of the squid.
+        layer (LayerSpec): Layer specification for the squid component.
     """
     flux_hole_width: float = 1.
     flux_hole_length: float = 5
@@ -18,6 +24,9 @@ class SquidConfig(BaseModel):
 
     def build(self) -> gf.Component:
         """
+        Builds a squid component with a flux hole and two junctions.
+        Returns:
+            gf.Component: The squid component.
         """
         c: gf.Component = gf.Component()
         # tjc = top junction component
