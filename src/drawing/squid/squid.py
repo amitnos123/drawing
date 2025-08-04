@@ -16,6 +16,7 @@ class SquidConfig(BaseModel):
         outer_width (float): Width of the outer rectangle.
         junction_gap_length (float): Length of the gap between junctions.
         layer (LayerSpec): Layer specification for the squid component.
+        bridges_layer (LayerSpec | None): Optional layer specification for the bridges over the gap.
     """
     flux_hole_length: float = 15
     flux_hole_width: float = 5
@@ -23,6 +24,7 @@ class SquidConfig(BaseModel):
     outer_width: float = 10
     junction_gap_length: float = 2
     layer: LayerSpec = DEFAULT_LAYER
+    bridges_layer: LayerSpec | None = None
 
     def build(self) -> gf.Component:
         """
@@ -45,6 +47,10 @@ class SquidConfig(BaseModel):
         c4 = gf.boolean(c4, gap_hole_bottom, operation="not", layer=self.layer)
 
         c << c4
+
+        if self.bridges_layer != None:
+            c << gap_hole_top.remap_layers({self.layer: self.bridges_layer})
+            c << gap_hole_bottom.remap_layers({self.layer: self.bridges_layer})
 
         c.flatten()
 
