@@ -16,7 +16,7 @@ class SquidConfig(BaseModel):
         bottom_junction (BaseJunction): Junction at the bottom of the squid.
         layer (LayerSpec): Layer specification for the squid component.
     """
-    flux_hole_width: float = 1.
+    flux_hole_width: float = 1
     flux_hole_length: float = 5
     top_junction: BaseJunction = RegularJunction()
     bottom_junction: BaseJunction = RegularJunction()
@@ -78,3 +78,17 @@ class SquidConfig(BaseModel):
         """
         if self.flux_hole_width <= 0 or self.flux_hole_length <= 0:
             raise ValueError("Squid flux hole width and length must be positive.")
+        if not isinstance(self.top_junction, RegularJunction):
+            raise TypeError("Only RegularJunction is supported for top junction.")
+        if not isinstance(self.bottom_junction, RegularJunction):
+            raise TypeError("Only RegularJunction is supported for top junction.")
+        
+        top_junction_total_length = self.top_junction.total_length(c=gf.Component())
+        bottom_junction_total_length = self.bottom_junction.total_length(c=gf.Component())
+        if top_junction_total_length != bottom_junction_total_length:
+            raise ValueError("Only support for junctions with the same total length.")
+        if top_junction_total_length <= self.flux_hole_length:
+            raise ValueError("Junction length must be greater than flux hole length.")
+
+        self.top_junction.validate()
+        self.bottom_junction.validate()
