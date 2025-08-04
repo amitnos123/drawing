@@ -12,83 +12,107 @@ class SquidConfig(BaseModel):
     Attributes:
         flux_hole_width (float): Width of the flux hole.
         flux_hole_length (float): Length of the flux hole.
-        top_junction (BaseJunction): Junction at the top of the squid.
-        bottom_junction (BaseJunction): Junction at the bottom of the squid.
+        outer_length (float): Length of the outer rectangle.
+        outer_width (float): Width of the outer rectangle.
+        junction_gap_length (float): Length of the gap between junctions.
         layer (LayerSpec): Layer specification for the squid component.
     """
-    flux_hole_width: float = 1
-    flux_hole_length: float = 5
-    top_junction: BaseJunction = RegularJunction()
-    bottom_junction: BaseJunction = RegularJunction()
+    flux_hole_length: float = 15
+    flux_hole_width: float = 5
+    outer_length: float = 20
+    outer_width: float = 10
+    junction_gap_length: float = 2
     layer: LayerSpec = DEFAULT_LAYER
 
     def build(self) -> gf.Component:
         """
-        Builds a squid component with a flux hole and two junctions.
+        Builds the squid component by creating the flux hole and junctions.
         Returns:
             gf.Component: The squid component.
         """
         c: gf.Component = gf.Component()
-        # tjc = top junction component
-        tjc: gf.Component = self.top_junction.build(gf.Component(), focus_box=False)
-        # bjc = bottom junction component
-        bjc: gf.Component = self.bottom_junction.build(gf.Component(), focus_box=False)
-        
-        tjc_ref = c << tjc
-        bjc_ref = c << bjc
 
-        tjc_ref.movey((self.flux_hole_width / 2 + self.top_junction.width))
-        bjc_ref.movey(-(self.flux_hole_width / 2 + self.bottom_junction.width))
+        outer_rectangle = self.create_outer_rectangle(layer = self.layer)
+        flux_hole = self.create_flux_hole(layer = self.layer)
+        gap_hole_top = self.create_gap_hole(layer = self.layer)
+        gap_hole_bottom = self.create_gap_hole(layer = self.layer)
 
-        rectangle_length = (self.top_junction.total_length(c=c) - self.flux_hole_length) / 2
-        rectangle_width = tjc_ref.ymax - bjc_ref.ymin
-        r_right = self.straight(
-            length = rectangle_length, 
-            width = rectangle_width,
-            layer = self.layer
-        )
+        flux_hole.move((outer_rectangle.center[0] - flux_hole.center[0], outer_rectangle.center[1] - flux_hole.center[1]))
+        gap_hole_top.move((outer_rectangle.center[0] - gap_hole_top.center[0], outer_rectangle.ymax - gap_hole_top.ymax))
+        gap_hole_bottom.move((outer_rectangle.center[0] - gap_hole_bottom.center[0], outer_rectangle.ymin - gap_hole_bottom.ymin))
+        c4 = gf.boolean(outer_rectangle, flux_hole, operation="not", layer=self.layer)
+        c4 = gf.boolean(c4, gap_hole_top, operation="not", layer=self.layer)
+        c4 = gf.boolean(c4, gap_hole_bottom, operation="not", layer=self.layer)
 
-        r_left = self.straight(
-            length = rectangle_length, 
-            width = rectangle_width,
-            layer = self.layer
-        )
-        
-        
-        r_right_ref = c << r_right
-        r_left_ref = c << r_left
-
-        r_right_ref.movex(tjc_ref.xmax - r_right_ref.xmin)
-        r_right_ref.movey(tjc_ref.ymax - r_right_ref.ymax)
-
-        r_left_ref.movex(tjc_ref.xmin - r_left_ref.xmax)
-        r_left_ref.movey(tjc_ref.ymax - r_left_ref.ymax)
+        c << c4
 
         c.flatten()
 
         return c
 
-    def straight(self, length: float = 10, width: float = 1, layer = (1, 0)):
+    def create_outer_rectangle(self, layer) -> gf.Component:
+        """
+        Creates the outer rectangle of the squid.
+        Returns:
+            gf.Component: The outer rectangle component.
+        """
+        return self.create_rectangle(length=self.outer_length, width=self.outer_width, layer=layer)
+
+    def create_flux_hole(self, layer) -> gf.Component:
+        """
+        Creates the flux hole component.
+        Returns:
+            gf.Component: The flux hole component.
+        """
+        return self.create_rectangle(length=self.flux_hole_length, width=self.flux_hole_width, layer=layer)
+    
+    def create_gap_hole(self, layer) -> gf.Component:
+        """
+        Creates the gap hole component.
+        This is the gap between the two junctions in the squid.
+        Returns:
+            gf.Component: The flux hole component.
+        """
+        return self.create_rectangle(length=self.junction_gap_length, width=self.junction_gap_width(), layer=layer)
+
+    def create_rectangle(self, length: float = 10, width: float = 1, layer = (1, 0)):
         c = gf.Component()
         c.add_polygon([(0, 0), (length, 0), (length, width), (0, width)], layer=layer)
         return c 
 
+    def junction_gap_width(self) -> float:
+        """
+        Returns the width of the junction gap.
+        """
+        return  (self.outer_width - self.flux_hole_width) / 2
+
     def validate(self) -> None:
         """
+        Validates the squid configuration.
+        Raises:
+            ValueError: If any of the dimensions are not positive or if the outer dimensions are smaller than the flux hole or junction gap.
+        Raises:
+            ValueError: If the outer dimensions are smaller than the flux hole or junction gap.
+        Raises:
+            ValueError: If the flux hole dimensions are not positive.
+        Raises:
+            ValueError: If the outer dimensions are not positive.
+        Raises:
+            ValueError: If the junction gap length is not positive.
+        Raises:
+            ValueError: If the outer dimensions are smaller than the flux hole or junction gap.
         """
         if self.flux_hole_width <= 0 or self.flux_hole_length <= 0:
             raise ValueError("Squid flux hole width and length must be positive.")
-        if not isinstance(self.top_junction, RegularJunction):
-            raise TypeError("Only RegularJunction is supported for top junction.")
-        if not isinstance(self.bottom_junction, RegularJunction):
-            raise TypeError("Only RegularJunction is supported for top junction.")
-        
-        top_junction_total_length = self.top_junction.total_length(c=gf.Component())
-        bottom_junction_total_length = self.bottom_junction.total_length(c=gf.Component())
-        if top_junction_total_length != bottom_junction_total_length:
-            raise ValueError("Only support for junctions with the same total length.")
-        if top_junction_total_length <= self.flux_hole_length:
-            raise ValueError("Junction length must be greater than flux hole length.")
-
-        self.top_junction.validate()
-        self.bottom_junction.validate()
+        if self.outer_length <= 0 or self.outer_width <= 0:
+            raise ValueError("Squid outer length and width must be positive.")
+        if self.junction_gap_length <= 0:
+            raise ValueError("Squid junction gap length must be positive.")
+        if self.outer_length < self.flux_hole_length:
+            raise ValueError("Squid outer length must be greater than flux hole length.")
+        if self.outer_width < self.flux_hole_width:
+            raise ValueError("Squid outer width must be greater than flux hole width.")
+        if self.outer_length < self.junction_gap_length:
+            raise ValueError("Squid outer length must be greater than flux hole length.")
+        if self.outer_width < self.junction_gap_width():
+            raise ValueError("Squid outer width must be greater than junction gap width.")
