@@ -94,7 +94,7 @@ class SnailConfig(BaseConfig):
         Returns:
             float: The length of the bottom junction arm.
         """
-        return self.bottom_junction_length_arm_length(
+        return SnailConfig.bottom_junction_length_arm_length(
             left_junction=self.top_left_junction,
             middle_junction=self.top_middle_junction,
             right_junction=self.top_right_junction,
