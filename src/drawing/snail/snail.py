@@ -76,6 +76,31 @@ class SnailConfig(BaseConfig):
 
         return c
 
+    @staticmethod
+    def bottom_junction_length_arm_length(left_junction: BaseJunctionConfig = SymmetricJunctionConfig(), middle_junction: BaseJunctionConfig = SymmetricJunctionConfig(), right_junction: BaseJunctionConfig = SymmetricJunctionConfig(), bottom_gap: float = 1) -> float:
+        """Calculates the length of the bottom junction arm.
+        Args:
+            left_junction (BaseJunctionConfig): Configuration for the left junction.
+            middle_junction (BaseJunctionConfig): Configuration for the middle junction.
+            right_junction (BaseJunctionConfig): Configuration for the right junction.
+            bottom_gap (float): Gap between the bottom junction and the flux hole.
+        Returns:
+            float: The length of the bottom junction arm.
+        """
+        return ( left_junction.total_length() + middle_junction.total_length() + right_junction.total_length() - bottom_gap ) / 2
+
+    def bottom_junction_length_arm_length(self) -> float:
+        """Calculates the length of the bottom junction arm based on the current configuration.
+        Returns:
+            float: The length of the bottom junction arm.
+        """
+        return self.bottom_junction_length_arm_length(
+            left_junction=self.top_left_junction,
+            middle_junction=self.top_middle_junction,
+            right_junction=self.top_right_junction,
+            bottom_gap=self.flux_hole_width
+        )
+
     def validate(self) -> None:
         super().validate()
         self.top_junction.validate()
