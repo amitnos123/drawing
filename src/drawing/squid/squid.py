@@ -22,9 +22,6 @@ class SquidConfig(BaseConfig):
     top_junction: BaseJunctionConfig = SymmetricJunctionConfig()
     bottom_junction: BaseJunctionConfig = SymmetricJunctionConfig()
 
-    TOP_PREFIX: str = "top_"
-    BOTTOM_PREFIX: str = "bottom_"
-
     LEFT_CONNECTING_PORT_NAME: str = "left_connection"
     RIGHT_CONNECTING_PORT_NAME: str = "right_connection"
 
