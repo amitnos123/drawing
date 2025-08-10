@@ -1,3 +1,5 @@
+from pydantic import computed_field
+from pyparsing import cached_property
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
@@ -8,6 +10,11 @@ class BaseArmConfig(BaseConfig):
         layer (LayerSpec): Layer specification for the junction component.
     """
 
+    CONNECTION_PORT_NAME: str = "connection"
+    GAP_PORT_NAME: str = "gap"
+
+    @computed_field
+    @cached_property
     def build(self) -> gf.Component:
         raise NotImplementedError("Subclasses should implement this method.")
 

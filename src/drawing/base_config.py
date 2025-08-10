@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, computed_field
 import gdsfactory as gf
+from pyparsing import cached_property
 from .shared import DEFAULT_LAYER
 class BaseConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     """
     Base configuration for drawing components.
     Attributes:
@@ -10,6 +12,8 @@ class BaseConfig(BaseModel):
     """
     layer: gf.typings.LayerSpec = DEFAULT_LAYER
 
+    @computed_field
+    @cached_property
     def build(self) -> gf.Component:
         """
         Builds the GDS component based on the configuration.

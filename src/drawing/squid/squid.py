@@ -2,6 +2,8 @@ from drawing.base_config import BaseConfig
 import gdsfactory as gf
 from ..junction import BaseJunctionConfig, SymmetricJunctionConfig
 from pydantic import model_validator
+from pydantic import computed_field
+from pyparsing import cached_property
 
 class SquidConfig(BaseConfig):
     """Configuration for a squid component.
@@ -20,6 +22,14 @@ class SquidConfig(BaseConfig):
     top_junction: BaseJunctionConfig = SymmetricJunctionConfig()
     bottom_junction: BaseJunctionConfig = SymmetricJunctionConfig()
 
+    TOP_PREFIX: str = "top_"
+    BOTTOM_PREFIX: str = "bottom_"
+
+    LEFT_CONNECTING_PORT_NAME: str = "left_connection"
+    RIGHT_CONNECTING_PORT_NAME: str = "right_connection"
+
+    @computed_field
+    @cached_property
     def build(self) -> gf.Component:
         """
         Builds the squid component by creating the flux hole and junctions.
@@ -28,8 +38,8 @@ class SquidConfig(BaseConfig):
         """
         c: gf.Component = gf.Component()
 
-        c_top_junction = self.top_junction.build()
-        c_bottom_junction = self.bottom_junction.build()
+        c_top_junction = self.top_junction.build
+        c_bottom_junction = self.bottom_junction.build
 
         # Create the flux hole
         tj_ref = c << c_top_junction
@@ -50,18 +60,14 @@ class SquidConfig(BaseConfig):
         fhb_left = c << flux_hole_bar_left
         fhb_right = c << flux_hole_bar_right
 
-        fhb_left.connect("connect_top", tj_ref.ports["left_connection"])
-        fhb_left.connect("connect_bottom", bj_ref.ports["left_connection"])
+        fhb_left.connect("connect_top", tj_ref.ports[self.top_junction.LEFT_CONNECTING_PORT_NAME])
+        fhb_left.connect("connect_bottom", bj_ref.ports[self.bottom_junction.LEFT_CONNECTING_PORT_NAME])
 
-        fhb_right.connect("connect_top", tj_ref.ports["right_connection"])
-        fhb_right.connect("connect_bottom", bj_ref.ports["right_connection"])
-
-        c.add_port(name="top_left_gap", port=tj_ref.ports["left_gap"])
-        c.add_port(name="top_right_gap", port=tj_ref.ports["right_gap"])
-        c.add_port(name="bottom_left_gap", port=bj_ref.ports["left_gap"])
-        c.add_port(name="bottom_right_gap", port=bj_ref.ports["right_gap"])
-        c.add_port(name="connection_left", center=(c.xmin, c.center[1]), width=flux_hole_bar_width, orientation=180, layer=self.layer, port_type="electrical")
-        c.add_port(name="connection_right", center=(c.xmax, c.center[1]), width=flux_hole_bar_width, orientation=0, layer=self.layer, port_type="electrical")
+        fhb_right.connect("connect_top", tj_ref.ports[self.top_junction.RIGHT_CONNECTING_PORT_NAME])
+        fhb_right.connect("connect_bottom", bj_ref.ports[self.bottom_junction.RIGHT_CONNECTING_PORT_NAME])
+        
+        c.add_port(name=self.LEFT_CONNECTING_PORT_NAME, center=(c.xmin, c.center[1]), width=flux_hole_bar_width, orientation=180, layer=self.layer, port_type="electrical")
+        c.add_port(name=self.RIGHT_CONNECTING_PORT_NAME, center=(c.xmax, c.center[1]), width=flux_hole_bar_width, orientation=0, layer=self.layer, port_type="electrical")
 
         c.flatten()
 

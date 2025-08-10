@@ -2,7 +2,8 @@ from drawing.base_config import BaseConfig
 from drawing.junction.regular_arm import RegularArmConfig
 import gdsfactory as gf
 from ..junction import BaseJunctionConfig, SymmetricJunctionConfig
-from pydantic import model_validator
+from pydantic import computed_field
+from pyparsing import cached_property
 
 class SnailConfig(BaseConfig):
     """Configuration for a squid component.
@@ -29,6 +30,8 @@ class SnailConfig(BaseConfig):
             )
         )
 
+    @computed_field
+    @cached_property
     def build(self) -> gf.Component:
         """
         Builds the squid component by creating the flux hole and junctions.
@@ -38,18 +41,22 @@ class SnailConfig(BaseConfig):
         c: gf.Component = gf.Component()
 
         
-        c_top_left_junction = self.top_left_junction.build()
-        c_top_middle_junction = self.top_middle_junction.build()
-        c_top_right_junction = self.top_right_junction.build()
-        c_bottom_junction = self.bottom_junction.build()
+        c_top_left_junction = self.top_left_junction.build
+        c_top_middle_junction = self.top_middle_junction.build
+        c_top_right_junction = self.top_right_junction.build
+        c_bottom_junction = self.bottom_junction.build
 
         c_top_left_junction_ref = c << c_top_left_junction
         c_top_middle_junction_ref = c << c_top_middle_junction
         c_top_right_junction_ref = c << c_top_right_junction
         c_bottom_junction_ref = c << c_bottom_junction
 
-        c_top_left_junction_ref.connect("right_connection", c_top_middle_junction_ref.ports["left_connection"])
-        c_top_right_junction_ref.connect("left_connection", c_top_middle_junction_ref.ports["right_connection"])
+        
+
+        c_top_left_junction_ref.connect(self.top_left_junction.RIGHT_CONNECTING_PORT_NAME,
+                                        c_top_middle_junction_ref.ports[self.top_left_junction.LEFT_CONNECTING_PORT_NAME])
+        c_top_right_junction_ref.connect(self.top_left_junction.LEFT_CONNECTING_PORT_NAME,
+                                         c_top_middle_junction_ref.ports[self.top_left_junction.RIGHT_CONNECTING_PORT_NAME])
 
         c_bottom_junction_ref.movey(- self.flux_hole_width)
 

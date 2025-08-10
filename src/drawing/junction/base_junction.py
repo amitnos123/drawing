@@ -1,13 +1,21 @@
 from ..base_config import BaseConfig
+import gdsfactory as gf
 
 class BaseJunctionConfig(BaseConfig):
     """
     Base configuration for junction components.
     Attributes:
         layer (LayerSpec): Layer specification for the junction component.
+        gap_layer (LayerSpec): Layer specification for the gap.
+        gap_create (bool): Whether to create a gap in the junction.
     """
     
     gap_length: float = 1.0
+    gap_layer: gf.typings.LayerSpec = (1,11)
+    gap_create: bool = True
+
+    LEFT_PREFIX: str = "left_"
+    RIGHT_PREFIX: str = "right_"
     
     def total_length(self) -> float:
         """
