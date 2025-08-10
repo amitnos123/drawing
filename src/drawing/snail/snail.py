@@ -76,7 +76,7 @@ class SnailConfig(BaseConfig):
         fhb_left.connect("connect_top", c_top_left_junction_ref.ports["left_connection"])
         fhb_left.connect("connect_bottom", c_bottom_junction_ref.ports["left_connection"])
 
-        fhb_right.connect("connect_top", c_top_left_junction_ref.ports["right_connection"])
+        fhb_right.connect("connect_top", c_top_right_junction_ref.ports["right_connection"])
         fhb_right.connect("connect_bottom", c_bottom_junction_ref.ports["right_connection"])
 
         c.flatten()
