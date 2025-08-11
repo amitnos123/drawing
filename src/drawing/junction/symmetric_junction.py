@@ -32,7 +32,9 @@ class SymmetricJunctionConfig(BaseJunctionConfig):
     @cached_property
     def build(self) -> gf.Component:
         c = gf.Component()
-        
+
+        self.arm.layer = self.layer
+
         # Create left and right arms using the same arm configuration
         a = self.arm.build       
 
