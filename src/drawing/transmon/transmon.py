@@ -62,6 +62,8 @@ class TransmonConfig(BaseConfig):
 
         pad_ref.connect(self.pad.RIGHT_CONNECTING_PORT_NAME, taper_ref.ports[self.taper.WIDE_CONNECTING_PORT_NAME], allow_width_mismatch=True)
 
+
+        pt = smooth_corners(merge_referenced_shapes(pt)).copy()
         
         pt_right = pt.copy().mirror_x()
 
@@ -76,8 +78,6 @@ class TransmonConfig(BaseConfig):
         pt_left_ref = c << pt
 
         junction_ref = c << self.junction.build
-
-        junction_ref.layer = self.junction.layer
 
         pt_left_ref.connect("left_junction_connection", junction_ref.ports[self.junction.RIGHT_CONNECTING_PORT_NAME], allow_layer_mismatch=True)
         pt_right_ref.connect("right_junction_connection", junction_ref.ports[self.junction.LEFT_CONNECTING_PORT_NAME], allow_layer_mismatch=True)
