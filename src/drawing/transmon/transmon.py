@@ -10,6 +10,7 @@ from pydantic import computed_field
 from pyparsing import cached_property
 from ..base_config import BaseConfig
 from . import TaperConfig, PadConfig
+from .antenna import AntennaConfig
 
 
 class IntegrationConfig(BaseConfig):
@@ -47,8 +48,10 @@ class TransmonConfig(BaseConfig):
     pad: PadConfig = PadConfig()
     taper: TaperConfig = TaperConfig()
     junction: BaseJunctionConfig = SymmetricJunctionConfig(layer=(11,11))
-    # antenna: AntennaConfig = AntennaConfig()
+    antenna: AntennaConfig = AntennaConfig()
     validate_assignment: bool = False
+
+    juction_taper_overlap: float = 3
 
     @computed_field
     @cached_property
@@ -82,7 +85,14 @@ class TransmonConfig(BaseConfig):
         pt_left_ref.connect("left_junction_connection", junction_ref.ports[self.junction.RIGHT_CONNECTING_PORT_NAME], allow_layer_mismatch=True)
         pt_right_ref.connect("right_junction_connection", junction_ref.ports[self.junction.LEFT_CONNECTING_PORT_NAME], allow_layer_mismatch=True)
 
-        return merge_referenced_shapes(c)
+        pt_left_ref.movex(-self.juction_taper_overlap)
+        pt_right_ref.movex(self.juction_taper_overlap)
+
+        antenna_ref = c << self.antenna.build
+
+        antenna_ref.connect(self.antenna.ANTENNA_START_PORT, pt_right_ref.ports["antenna_connection"], allow_width_mismatch=True)
+
+        return merge_referenced_shapes(c.mirror_x())
 
     @classmethod
     def load_from_flat_dict(cls, d: dict) -> "TransmonConfig":
