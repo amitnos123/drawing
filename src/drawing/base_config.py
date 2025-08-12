@@ -12,8 +12,6 @@ class BaseConfig(BaseModel):
     """
     layer: gf.typings.LayerSpec = DEFAULT_LAYER
 
-    @computed_field
-    @cached_property
     def build(self) -> gf.Component:
         """
         Builds the GDS component based on the configuration.

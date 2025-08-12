@@ -1,6 +1,7 @@
 import gdsfactory as gf
 import gdsfactory.components as gc
-from pydantic import model_validator
+from pydantic import ConfigDict, computed_field, model_validator
+from pyparsing import cached_property
 from .base_arm import BaseArmConfig
 
 class FunnelrArmConfig(BaseArmConfig):
@@ -19,22 +20,49 @@ class FunnelrArmConfig(BaseArmConfig):
     narrow_length: float = 10.0
     narrow_width: float = 2.0
 
+    def __eq__(self, other):
+        if not isinstance(other, FunnelrArmConfig):
+            return NotImplemented
+        # include layer if it affects build
+        return (self.wide_length, self.wide_width, self.narrow_length, self.narrow_width, self.layer) == (other.wide_length, other.wide_width, other.narrow_length, other.narrow_width, other.layer)
+
+    def __hash__(self):
+        # same fields as __eq__
+        return hash((self.wide_length, self.wide_width, self.narrow_length, self.narrow_width, self.layer))
+
     def build(self) -> gf.Component:
+        return FunnelrArmConfig._build(
+            self.wide_length,
+            self.wide_width,
+            self.narrow_length,
+            self.narrow_width,
+            self.layer,
+        )
+
+    @gf.cell
+    @staticmethod
+    def _build(
+        wide_length: float,
+        wide_width: float,
+        narrow_length: float,
+        narrow_width: float,
+        layer,
+    ) -> gf.Component:
         c = gf.Component()
         
         # Create the trapezoidal and rectangular shapes
         # Trapezoid: wide at the top, narrow at the bottom
         tripozoid = gf.Component()
-        tripozoid.add_polygon([(0,self.wide_width/2), (self.wide_length, self.narrow_width/2), (self.wide_length, -self.narrow_width/2), (0,-self.wide_width/2)], layer=self.layer)
-        tripozoid.add_port(name="connection", center=(0, tripozoid.center[1]/2), width=self.wide_width, orientation=180, layer=self.layer, port_type="electrical")
+        tripozoid.add_polygon([(0,wide_width/2), (wide_length, narrow_width/2), (wide_length, -narrow_width/2), (0,-wide_width/2)], layer=layer)
+        tripozoid.add_port(name="connection", center=(0, tripozoid.center[1]/2), width=wide_width, orientation=180, layer=layer, port_type="electrical")
 
         # Rectangle: narrow at the top, wide at the bottom
         # Note: The rectangle is positioned to the right of the trapezoid
         rectangle = gf.Component()
-        rectangle.add_polygon([(0, 0), (self.narrow_length, 0), (self.narrow_length, self.narrow_width), (0, self.narrow_width)], layer=self.layer)
-        rectangle.add_port(name="gap", center=(self.narrow_length, self.narrow_width / 2), width=self.narrow_width, orientation=0, layer=self.layer, port_type="electrical")
+        rectangle.add_polygon([(0, 0), (narrow_length, 0), (narrow_length, narrow_width), (0, narrow_width)], layer=layer)
+        rectangle.add_port(name="gap", center=(narrow_length, narrow_width / 2), width=narrow_width, orientation=0, layer=layer, port_type="electrical")
 
-        t_ref = c << tripozoid.move((-self.wide_length, self.narrow_width/2))
+        t_ref = c << tripozoid.move((-wide_length, narrow_width/2))
         r_ref = c << rectangle
 
         c.add_ports(t_ref.ports)

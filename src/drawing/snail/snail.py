@@ -2,7 +2,7 @@ from drawing.base_config import BaseConfig
 from drawing.junction.regular_arm import RegularArmConfig
 import gdsfactory as gf
 from ..junction import BaseJunctionConfig, SymmetricJunctionConfig
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 from pyparsing import cached_property
 
 class SnailConfig(BaseConfig):
@@ -11,7 +11,7 @@ class SnailConfig(BaseConfig):
         flux_hole_width (float): Width of the flux hole.
         flux_hole_length (float): Length of the flux hole.
         flux_hole_bar_length (float): Length of the flux hole bar.
-        top_junction (BaseJunctionConfig): Configuration for the top junction.
+        top_left_junction (BaseJunctionConfig): Configuration for the top junction.
         top_middle_junction (BaseJunctionConfig): Configuration for the middle top junction.
         top_right_junction (BaseJunctionConfig): Configuration for the right top junction.
         bottom_junction (BaseJunctionConfig): Configuration for the bottom junction.
@@ -30,9 +30,58 @@ class SnailConfig(BaseConfig):
             )
         )
 
-    @computed_field
-    @cached_property
+    model_config = ConfigDict(frozen=True)
+
     def build(self) -> gf.Component:
+        return SnailConfig._build(
+            flux_hole_width=self.flux_hole_width,
+            flux_hole_bar_length=self.flux_hole_bar_length,
+
+            top_left_junction=self.top_left_junction.build().copy(),
+            top_middle_junction=self.top_middle_junction.build().copy(),
+            top_right_junction=self.top_right_junction.build().copy(),
+            bottom_junction=self.bottom_junction.build().copy(),
+            layer=self.layer,
+
+            # Port names from their respective configs
+            top_left_junction_right_connecting_port=self.top_left_junction.RIGHT_CONNECTING_PORT_NAME,
+            top_left_junction_left_connecting_port=self.top_left_junction.LEFT_CONNECTING_PORT_NAME,
+
+            top_middle_junction_right_connecting_port=self.top_middle_junction.RIGHT_CONNECTING_PORT_NAME,
+            top_middle_junction_left_connecting_port=self.top_middle_junction.LEFT_CONNECTING_PORT_NAME,
+
+            top_right_junction_right_connecting_port=self.top_right_junction.RIGHT_CONNECTING_PORT_NAME,
+            top_right_junction_left_connecting_port=self.top_right_junction.LEFT_CONNECTING_PORT_NAME,
+
+            bottom_junction_right_connecting_port=self.bottom_junction.RIGHT_CONNECTING_PORT_NAME,
+            bottom_junction_left_connecting_port=self.bottom_junction.LEFT_CONNECTING_PORT_NAME,
+        )
+
+
+    @gf.cell
+    @staticmethod
+    def _build(
+        flux_hole_width: float,
+        flux_hole_bar_length: float,
+        top_left_junction: gf.Component,
+        top_middle_junction: gf.Component,
+        top_right_junction: gf.Component,
+        bottom_junction: gf.Component,
+        layer,
+
+        top_left_junction_right_connecting_port: str,
+        top_left_junction_left_connecting_port: str,
+
+        top_middle_junction_right_connecting_port: str,
+        top_middle_junction_left_connecting_port: str,
+
+        top_right_junction_right_connecting_port: str,
+        top_right_junction_left_connecting_port: str,
+
+        bottom_junction_right_connecting_port: str,
+        bottom_junction_left_connecting_port: str,
+        
+    ) -> gf.Component:
         """
         Builds the squid component by creating the flux hole and junctions.
         Returns:
@@ -40,33 +89,25 @@ class SnailConfig(BaseConfig):
         """
         c: gf.Component = gf.Component()
 
-        
-        c_top_left_junction = self.top_left_junction.build
-        c_top_middle_junction = self.top_middle_junction.build
-        c_top_right_junction = self.top_right_junction.build
-        c_bottom_junction = self.bottom_junction.build
+        c_top_left_junction_ref = c << top_left_junction
+        c_top_middle_junction_ref = c << top_middle_junction
+        c_top_right_junction_ref = c << top_right_junction
+        c_bottom_junction_ref = c << bottom_junction
 
-        c_top_left_junction_ref = c << c_top_left_junction
-        c_top_middle_junction_ref = c << c_top_middle_junction
-        c_top_right_junction_ref = c << c_top_right_junction
-        c_bottom_junction_ref = c << c_bottom_junction
+        c_top_left_junction_ref.connect(top_left_junction_right_connecting_port,
+                                        c_top_middle_junction_ref.ports[top_left_junction_left_connecting_port])
+        c_top_right_junction_ref.connect(top_left_junction_left_connecting_port,
+                                         c_top_middle_junction_ref.ports[top_left_junction_right_connecting_port])
 
-        
-
-        c_top_left_junction_ref.connect(self.top_left_junction.RIGHT_CONNECTING_PORT_NAME,
-                                        c_top_middle_junction_ref.ports[self.top_left_junction.LEFT_CONNECTING_PORT_NAME])
-        c_top_right_junction_ref.connect(self.top_left_junction.LEFT_CONNECTING_PORT_NAME,
-                                         c_top_middle_junction_ref.ports[self.top_left_junction.RIGHT_CONNECTING_PORT_NAME])
-
-        c_bottom_junction_ref.movey(- self.flux_hole_width)
+        c_bottom_junction_ref.movey(- flux_hole_width)
 
         flux_hole_bar_width = c.ymax - c.ymin
         top_junction_y_length = c_top_left_junction_ref.ymax - c_top_left_junction_ref.ymin
-        bottom_junction_y_length = c_bottom_junction.ymax - c_bottom_junction.ymin
+        bottom_junction_y_length = bottom_junction.ymax - bottom_junction.ymin
         flux_hole_bar_left = gf.Component()
-        flux_hole_bar_left.add_polygon([(0, 0), (self.flux_hole_bar_length, 0), (self.flux_hole_bar_length, flux_hole_bar_width), (0, flux_hole_bar_width)], layer=self.layer)
-        flux_hole_bar_left.add_port(name="connect_top", center=(self.flux_hole_bar_length, flux_hole_bar_left.ymax - top_junction_y_length / 2), width=top_junction_y_length, orientation=0, layer=self.layer, port_type="electrical")
-        flux_hole_bar_left.add_port(name="connect_bottom", center=(self.flux_hole_bar_length, flux_hole_bar_left.ymin + bottom_junction_y_length / 2), width=bottom_junction_y_length, orientation=0, layer=self.layer, port_type="electrical")
+        flux_hole_bar_left.add_polygon([(0, 0), (flux_hole_bar_length, 0), (flux_hole_bar_length, flux_hole_bar_width), (0, flux_hole_bar_width)], layer=layer)
+        flux_hole_bar_left.add_port(name="connect_top", center=(flux_hole_bar_length, flux_hole_bar_left.ymax - top_junction_y_length / 2), width=top_junction_y_length, orientation=0, layer=layer, port_type="electrical")
+        flux_hole_bar_left.add_port(name="connect_bottom", center=(flux_hole_bar_length, flux_hole_bar_left.ymin + bottom_junction_y_length / 2), width=bottom_junction_y_length, orientation=0, layer=layer, port_type="electrical")
 
         flux_hole_bar_right = flux_hole_bar_left.copy().mirror_x()
 
@@ -74,11 +115,11 @@ class SnailConfig(BaseConfig):
         fhb_right = c << flux_hole_bar_right
 
         
-        fhb_left.connect("connect_top", c_top_left_junction_ref.ports[self.top_left_junction.LEFT_CONNECTING_PORT_NAME])
-        fhb_left.connect("connect_bottom", c_bottom_junction_ref.ports[self.bottom_junction.LEFT_CONNECTING_PORT_NAME])
+        fhb_left.connect("connect_top", c_top_left_junction_ref.ports[top_left_junction_left_connecting_port])
+        fhb_left.connect("connect_bottom", c_bottom_junction_ref.ports[bottom_junction_left_connecting_port])
 
-        fhb_right.connect("connect_top", c_top_right_junction_ref.ports[self.top_right_junction.RIGHT_CONNECTING_PORT_NAME])
-        fhb_right.connect("connect_bottom", c_bottom_junction_ref.ports[self.bottom_junction.RIGHT_CONNECTING_PORT_NAME])
+        fhb_right.connect("connect_top", c_top_right_junction_ref.ports[top_right_junction_right_connecting_port])
+        fhb_right.connect("connect_bottom", c_bottom_junction_ref.ports[bottom_junction_right_connecting_port])
 
         c.flatten()
 

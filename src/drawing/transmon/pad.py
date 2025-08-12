@@ -1,4 +1,4 @@
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 from pyparsing import cached_property
 from ..base_config import BaseConfig
 import gdsfactory as gf
@@ -17,9 +17,29 @@ class PadConfig(BaseConfig):
     LEFT_CONNECTING_PORT_NAME: str = "left_connection"
     RIGHT_CONNECTING_PORT_NAME: str = "right_connection"
 
-    @computed_field
-    @cached_property
+    model_config = ConfigDict(frozen=True)
+
     def build(self) -> gf.Component:
+        return PadConfig._build(
+            width=self.width,
+            length=self.length,
+            radius=self.radius,
+            layer=self.layer,
+            left_port_name=self.LEFT_CONNECTING_PORT_NAME,
+            right_port_name=self.RIGHT_CONNECTING_PORT_NAME,
+        )
+
+    @staticmethod
+    @gf.cell
+    def _build(
+        width: float,
+        length: float,
+        radius: float,
+        layer: tuple[int, int],
+        left_port_name: str,
+        right_port_name: str,
+    ) -> gf.Component:
+        c = gf.Component()
         """
         Builds pad components and integrates them into the given component.
 
@@ -27,13 +47,13 @@ class PadConfig(BaseConfig):
         and sets up electrical ports.
         """
         c = gf.Component()
-        c.add_polygon([(0, 0), (self.length, 0), (self.length, self.width), (0, self.width)], layer=self.layer)
+        c.add_polygon([(0, 0), (length, 0), (length, width), (0, width)], layer=layer)
 
-        c.add_port(name=self.LEFT_CONNECTING_PORT_NAME, center=(0, self.width / 2), width=self.width, orientation=180, layer=self.layer, port_type="electrical")
-        c.add_port(name=self.RIGHT_CONNECTING_PORT_NAME, center=(self.length, self.width / 2), width=self.width, orientation=0, layer=self.layer, port_type="electrical")
+        c.add_port(name=left_port_name, center=(0, width / 2), width=width, orientation=180, layer=layer, port_type="electrical")
+        c.add_port(name=right_port_name, center=(length, width / 2), width=width, orientation=0, layer=layer, port_type="electrical")
 
-        if self.radius > 0:
-            c = smooth_corners(c, radius=self.radius, layer=self.layer)
+        if radius > 0:
+            c = smooth_corners(c, radius=radius, layer=layer)
 
         return c
 

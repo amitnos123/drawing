@@ -1,8 +1,9 @@
+from typing import Self
 from gdsfactory.typings import LayerSpec
 from ..shared import DEFAULT_LAYER
 import gdsfactory as gf
 from .base_arm import BaseArmConfig
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 from pyparsing import cached_property
 
 class RegularArmConfig(BaseArmConfig):
@@ -17,13 +18,33 @@ class RegularArmConfig(BaseArmConfig):
     length: float = 10.0
     width: float = 1.0
 
-    @computed_field
-    @cached_property
+    def __eq__(self, other):
+        if not isinstance(other, RegularArmConfig):
+            return NotImplemented
+        # include layer if it affects build
+        return (self.length, self.width, self.layer) == (other.length, other.width, other.layer)
+
+    def __hash__(self):
+        # same fields as __eq__
+        return hash((self.length, self.width, self.layer))
+
     def build(self) -> gf.Component:
+        return RegularArmConfig._build(
+        self.length, 
+        self.width, 
+        self.layer, 
+        self.CONNECTION_PORT_NAME, 
+        self.GAP_PORT_NAME
+    )
+
+    
+    @gf.cell
+    @staticmethod
+    def _build(length: float, width: float, layer, connect_port_name: str, gap_port_name: str) -> gf.Component:
         c = gf.Component()
-        c.add_polygon([(0, 0), (self.length, 0), (self.length, self.width), (0, self.width)], layer=self.layer)
-        c.add_port(name=self.CONNECTION_PORT_NAME, center=(self.length, self.width / 2), width=self.width, orientation=0, layer=self.layer, port_type="electrical")
-        c.add_port(name=self.GAP_PORT_NAME, center=(0, self.width / 2), width=self.width, orientation=180, layer=self.layer, port_type="electrical")
+        c.add_polygon([(0, 0), (length, 0), (length, width), (0, width)], layer=layer)
+        c.add_port(name=connect_port_name, center=(length, width / 2), width=width, orientation=0, layer=layer, port_type="electrical")
+        c.add_port(name=gap_port_name, center=(0, width / 2), width=width, orientation=180, layer=layer, port_type="electrical")
         return c
 
     def total_length(self) -> float:

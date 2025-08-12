@@ -1,3 +1,4 @@
+from pydantic import ConfigDict
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
@@ -16,6 +17,8 @@ class BaseJunctionConfig(BaseConfig):
 
     LEFT_PREFIX: str = "left_"
     RIGHT_PREFIX: str = "right_"
+
+    model_config = ConfigDict(frozen=True)
     
     def total_length(self) -> float:
         """

@@ -1,4 +1,4 @@
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 from pyparsing import cached_property
 from ..base_config import BaseConfig
 import gdsfactory as gf
@@ -14,16 +14,35 @@ class TaperConfig(BaseConfig):
     WIDE_CONNECTING_PORT_NAME: str = "wide_connection"
     NARROW_CONNECTING_PORT_NAME: str = "narrow_connection"
 
-    @computed_field
-    @cached_property
+    model_config = ConfigDict(frozen=True)
+
     def build(self) -> gf.Component:
+        return TaperConfig._build(
+            length=self.length,
+            wide_width=self.wide_width,
+            narrow_width=self.narrow_width,
+            layer=self.layer,
+            wide_port_name=self.WIDE_CONNECTING_PORT_NAME,
+            narrow_port_name=self.NARROW_CONNECTING_PORT_NAME,
+        )
+
+    @staticmethod
+    @gf.cell
+    def _build(
+        length: float,
+        wide_width: float,
+        narrow_width: float,
+        layer: tuple[int, int],
+        wide_port_name: str,
+        narrow_port_name: str,
+    ) -> gf.Component:
         c = gf.Component()
 
-        c.add_polygon([(0,self.wide_width/2), (self.length, self.narrow_width/2), (self.length, -self.narrow_width/2), (0,-self.wide_width/2)], layer=self.layer)
+        c.add_polygon([(0,wide_width/2), (length, narrow_width/2), (length, -narrow_width/2), (0,-wide_width/2)], layer=layer)
         
         # Add ports for connecting to pad and junction
-        c.add_port(name=self.WIDE_CONNECTING_PORT_NAME, center=(0, 0), width=self.wide_width, orientation=180, layer=self.layer, port_type="electrical")
-        c.add_port(name=self.NARROW_CONNECTING_PORT_NAME, center=(self.length, 0), width=self.narrow_width, orientation=0, layer=self.layer, port_type="electrical")
+        c.add_port(name=wide_port_name, center=(0, 0), width=wide_width, orientation=180, layer=layer, port_type="electrical")
+        c.add_port(name=narrow_port_name, center=(length, 0), width=narrow_width, orientation=0, layer=layer, port_type="electrical")
         
         # Taper + Compass connected
         return c

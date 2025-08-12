@@ -1,11 +1,10 @@
 from ..shared import merge_decorator
 import gdsfactory.components as gc
 import gdsfactory as gf
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 from pyparsing import cached_property
 from ..base_config import BaseConfig
 import gdsfactory as gf
-
 
 class AntennaConfig(BaseConfig):
     """
@@ -27,56 +26,50 @@ class AntennaConfig(BaseConfig):
     
     ANTENNA_START_PORT: str = 'start'
 
-    @computed_field
-    @cached_property
+    model_config = ConfigDict(frozen=True)
+
     def build(self) -> gf.Component:
-        """
-        Integrates the antenna shape into the provided component.
-
-        This method draws the antenna, adds it as a reference to the component,
-        and connects the antenna's starting port to the component's antenna port.
-
-        Args:
-            c (gf.Component): The component to which the antenna is added.
-        """
-        # Draw the antenna shape
-        return self._draw()
-
-    @merge_decorator
-    def _draw(self) -> gf.Component:
-        """
-        Draws the antenna geometry by combining a rectangular and a circular shape.
-
-        Returns:
-            gf.Component: A component representing the antenna.
-        """
-        c = gf.Component()
-
-        # gc.compass: Rectangular contact pad with centered ports on rectangle edges (north, south, east, and west)
-        # size: Tuple[float, float] rectangle size 
-        compass = gc.compass(size=(self.length, self.width), layer=self.layer)
-        circle = gc.circle(radius=self.radius, layer=self.layer)
-
-        # Create compass and circle
-        compass_ref = c << compass
-        circle_ref = c << circle
-
-        # Create a port for the circle
-        circle_port = gf.Port(
-            name='circle_port',
-            center=circle_ref.center,
-            layer=self.layer[0],
+        return AntennaConfig._build(
+            length=self.length,
             width=self.width,
-            orientation=180
+            radius=self.radius,
+            layer=self.layer,
+            start_port_name=self.ANTENNA_START_PORT,
         )
 
-        # Connect the circle to the compass
+    @staticmethod
+    @gf.cell
+    def _build(
+        length: float,
+        width: float,
+        radius: float,
+        layer: tuple[int, int],
+        start_port_name: str,
+    ) -> gf.Component:
+        c = gf.Component()
+
+        # Rectangular pad (compass shape)
+        compass = gc.compass(size=(length, width), layer=layer)
+        circle = gc.circle(radius=radius, layer=layer)
+
+        compass_ref = c.add_ref(compass)
+        circle_ref = c.add_ref(circle)
+
+        # Create a fake port at the center of the circle to connect to the compass
+        circle_port = gf.Port(
+            name="circle_port",
+            center=circle_ref.center,
+            layer=layer[0],
+            width=width,
+            orientation=180,
+        )
+
+        # Connect the circle to the east port of the compass (e3)
         compass_ref.connect("e3", circle_port, allow_type_mismatch=True)
 
-        # Create the antenna's start port
-        c.add_port(self.ANTENNA_START_PORT, port=compass_ref.ports['e1'])
+        # Add main antenna port at the west end of the compass (e1)
+        c.add_port(start_port_name, port=compass_ref.ports["e1"])
 
-        # return the component with the antenna shape
         return c
 
     def validate(self) -> None:

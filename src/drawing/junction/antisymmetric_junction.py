@@ -2,7 +2,7 @@ import gdsfactory as gf
 from .base_junction import BaseJunctionConfig
 from .base_arm import BaseArmConfig
 from .regular_arm import RegularArmConfig
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 from functools import cached_property
 class AntisymmetricJunctionConfig(BaseJunctionConfig):
     """
@@ -17,41 +17,52 @@ class AntisymmetricJunctionConfig(BaseJunctionConfig):
         
     arm: BaseArmConfig = RegularArmConfig()
 
-    @computed_field
-    @cached_property
+    model_config = ConfigDict(frozen=True)
+
+    @property
     def LEFT_CONNECTING_PORT_NAME(self) -> str:
         return self.LEFT_PREFIX + self.arm.CONNECTION_PORT_NAME
     
-    @computed_field
-    @cached_property
+    @property
     def RIGHT_CONNECTING_PORT_NAME(self) -> str:
         return self.RIGHT_PREFIX + self.arm.CONNECTION_PORT_NAME
 
-    @computed_field
-    @cached_property
     def build(self) -> gf.Component:
+        return AntisymmetricJunctionConfig._build(
+            arm=self.arm,
+            gap_length=self.gap_length,
+            layer=self.layer,
+            gap_layer=self.gap_layer,
+            gap_create=self.gap_create,
+            right_prefix=self.RIGHT_PREFIX,
+            left_prefix=self.LEFT_PREFIX,
+        )
+
+    @staticmethod
+    @gf.cell
+    def _build(arm: gf.Component, arm_gap_port_name: str, gap_length: float, layer, gap_layer, gap_create: bool, right_prefix: str, left_prefix: str) -> gf.Component:
         c = gf.Component()
         
         # Create left and right arms using the same arm configuration
-        a = self.arm.build()
+        a = arm.build()
         right_arm_ref = c << a.copy()
         left_arm_ref = c << a.mirror_x().mirror_y()
 
         # Connect the arms via ports
-        left_arm_ref.connect(self.arm.GAP_PORT_NAME, right_arm_ref.ports[self.arm.GAP_PORT_NAME])
+        left_arm_ref.connect(arm_gap_port_name, right_arm_ref.ports[arm_gap_port_name])
         
         # Position the right arm
-        right_arm_ref.move((self.arm.length + self.gap_length, 0))
+        right_arm_ref.move((arm.length + gap_length, 0))
 
-        if self.gap_create:
+        if gap_create:
             # Create a gap in the junction
-            gap = c << gf.components.rectangle(size=(self.gap_length, right_arm_ref.ymax - right_arm_ref.ymin), layer=self.gap_layer)
-            gap.connect("e1", left_arm_ref.ports[self.arm.GAP_PORT_NAME], allow_layer_mismatch=True)
-            gap.connect("e2", right_arm_ref.ports[self.arm.GAP_PORT_NAME], allow_layer_mismatch=True)
+            gap = c << gf.components.rectangle(size=(gap_length, right_arm_ref.ymax - right_arm_ref.ymin), layer=gap_layer)
+            gap.connect("e1", left_arm_ref.ports[arm_gap_port_name], allow_layer_mismatch=True)
+            gap.connect("e2", right_arm_ref.ports[arm_gap_port_name], allow_layer_mismatch=True)
 
         # Add ports for the arms
-        c.add_ports(right_arm_ref.ports, prefix=self.RIGHT_PREFIX)
-        c.add_ports(left_arm_ref.ports, prefix=self.LEFT_PREFIX)
+        c.add_ports(right_arm_ref.ports, prefix=right_prefix)
+        c.add_ports(left_arm_ref.ports, prefix=left_prefix)
 
         return c
 

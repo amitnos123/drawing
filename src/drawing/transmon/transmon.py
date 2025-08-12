@@ -5,17 +5,20 @@ from ..shared import smooth_corners, merge_referenced_shapes
 from typing import TypeVar, Type
 import matplotlib.pyplot as plt
 from typing_extensions import Self
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 from pydantic import computed_field
 from pyparsing import cached_property
 from ..base_config import BaseConfig
 from . import TaperConfig, PadConfig
 from .antenna import AntennaConfig
+import gdsfactory as gf
 
 
 class IntegrationConfig(BaseConfig):
     feature_radius: float = 10.0
     use_antenna: bool = True
+
+    model_config = ConfigDict(frozen=True)
 
 
 T = TypeVar('T', bound=BaseConfig)
@@ -53,44 +56,81 @@ class TransmonConfig(BaseConfig):
 
     juction_taper_overlap: float = 3
 
-    @computed_field
-    @cached_property
+    model_config = ConfigDict(frozen=True)
+
     def build(self) -> gf.Component:
-        """
-        """
+        return TransmonConfig._build(
+            # integration_config=self.integration_config,
+            pad=self.pad.build().copy(),
+            taper=self.taper.build().copy(),
+            junction=self.junction.build().copy(),
+            antenna=self.antenna.build().copy(),
+            layer=self.layer,
+            juction_taper_overlap=self.juction_taper_overlap,
+            taper_narrow_width=self.taper.narrow_width,
+            pad_width=self.pad.width,
+
+            
+            junction_right_connecting_port=self.junction.RIGHT_CONNECTING_PORT_NAME,
+            junction_left_connecting_port=self.junction.LEFT_CONNECTING_PORT_NAME,
+            pad_right_connecting_port=self.pad.RIGHT_CONNECTING_PORT_NAME,
+            taper_wide_connecting_port=self.taper.WIDE_CONNECTING_PORT_NAME,
+            taper_narrow_connecting_port=self.taper.NARROW_CONNECTING_PORT_NAME,
+            antenna_start_port=self.antenna.ANTENNA_START_PORT,
+        )
+
+    @gf.cell
+    @staticmethod
+    def _build(
+        # integration_config: IntegrationConfig,
+        pad: gf.Component,
+        taper: gf.Component,
+        junction: gf.Component,
+        antenna: gf.Component,
+        layer,
+        juction_taper_overlap: float,
+        junction_right_connecting_port: str,
+        junction_left_connecting_port: str,
+        pad_right_connecting_port: str,
+        taper_wide_connecting_port: str,
+        taper_narrow_connecting_port: str,
+        antenna_start_port: str ,
+        taper_narrow_width: float,
+        pad_width: float
+    ) -> gf.Component:
         pt = gf.Component()
 
-        pad_ref = pt << self.pad.build
-        taper_ref = pt << self.taper.build
+        pad_ref = pt << pad
+        taper_ref = pt << taper
 
-        pad_ref.connect(self.pad.RIGHT_CONNECTING_PORT_NAME, taper_ref.ports[self.taper.WIDE_CONNECTING_PORT_NAME], allow_width_mismatch=True)
+        pad_ref.connect(pad_right_connecting_port, taper_ref.ports[taper_wide_connecting_port], allow_width_mismatch=True)
 
 
         pt = smooth_corners(merge_referenced_shapes(pt)).copy()
         
         pt_right = pt.copy().mirror_x()
 
-        pt_right.add_port(name="right_junction_connection", center=(pt_right.xmin,0), width=self.taper.narrow_width, orientation=180, layer=self.layer, port_type="electrical")
-        pt_right.add_port(name="antenna_connection", center=(pt_right.xmax,0), width=self.pad.width, layer=self.layer, port_type="electrical")
+        pt_right.add_port(name="right_junction_connection", center=(pt_right.xmin,0), width=taper_narrow_width, orientation=180, layer=layer, port_type="electrical")
+        pt_right.add_port(name="antenna_connection", center=(pt_right.xmax,0), width=pad_width, layer=layer, port_type="electrical")
 
-        pt.add_port(name="left_junction_connection", port=taper_ref.ports[self.taper.NARROW_CONNECTING_PORT_NAME])
+        pt.add_port(name="left_junction_connection", port=taper_ref.ports[taper_narrow_connecting_port])
 
         c = gf.Component()
 
         pt_right_ref = c << pt_right
         pt_left_ref = c << pt
 
-        junction_ref = c << self.junction.build
+        junction_ref = c << junction
 
-        pt_left_ref.connect("left_junction_connection", junction_ref.ports[self.junction.RIGHT_CONNECTING_PORT_NAME], allow_layer_mismatch=True)
-        pt_right_ref.connect("right_junction_connection", junction_ref.ports[self.junction.LEFT_CONNECTING_PORT_NAME], allow_layer_mismatch=True)
+        pt_left_ref.connect("left_junction_connection", junction_ref.ports[junction_right_connecting_port], allow_layer_mismatch=True)
+        pt_right_ref.connect("right_junction_connection", junction_ref.ports[junction_left_connecting_port], allow_layer_mismatch=True)
 
-        pt_left_ref.movex(-self.juction_taper_overlap)
-        pt_right_ref.movex(self.juction_taper_overlap)
+        pt_left_ref.movex(-juction_taper_overlap)
+        pt_right_ref.movex(juction_taper_overlap)
 
-        antenna_ref = c << self.antenna.build
+        antenna_ref = c << antenna
 
-        antenna_ref.connect(self.antenna.ANTENNA_START_PORT, pt_right_ref.ports["antenna_connection"], allow_width_mismatch=True)
+        antenna_ref.connect(antenna_start_port, pt_right_ref.ports["antenna_connection"], allow_width_mismatch=True)
 
         return merge_referenced_shapes(c.mirror_x())
 
