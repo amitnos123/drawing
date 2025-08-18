@@ -59,7 +59,7 @@ class TransmonConfig(BaseConfig):
     model_config = ConfigDict(frozen=True)
 
     def build(self) -> gf.Component:
-        return TransmonConfig._build(
+        return TransmonConfig.transmon(
             # integration_config=self.integration_config,
             pad=self.pad.build().copy(),
             taper=self.taper.build().copy(),
@@ -81,7 +81,7 @@ class TransmonConfig(BaseConfig):
 
     @gf.cell
     @staticmethod
-    def _build(
+    def transmon(
         # integration_config: IntegrationConfig,
         pad: gf.Component,
         taper: gf.Component,

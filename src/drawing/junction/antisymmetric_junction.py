@@ -40,7 +40,7 @@ class AntisymmetricJunctionConfig(BaseJunctionConfig):
 
     @staticmethod
     @gf.cell
-    def _build(arm: gf.Component, arm_gap_port_name: str, gap_length: float, layer, gap_layer, gap_create: bool, right_prefix: str, left_prefix: str) -> gf.Component:
+    def antisymmetricJunction(arm: gf.Component, arm_gap_port_name: str, gap_length: float, layer, gap_layer, gap_create: bool, right_prefix: str, left_prefix: str) -> gf.Component:
         c = gf.Component()
         
         # Create left and right arms using the same arm configuration

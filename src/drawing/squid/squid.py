@@ -28,7 +28,7 @@ class SquidConfig(BaseConfig):
     model_config = ConfigDict(frozen=True)
 
     def build(self) -> gf.Component:
-        return SquidConfig._build(
+        return SquidConfig.squid(
             flux_hole_width=self.flux_hole_width,
             flux_hole_length=self.flux_hole_length,
             flux_hole_bar_length=self.flux_hole_bar_length,
@@ -45,7 +45,7 @@ class SquidConfig(BaseConfig):
 
     @gf.cell
     @staticmethod
-    def _build(
+    def squid(
         flux_hole_width: float,
         flux_hole_length: float,
         flux_hole_bar_length: float,

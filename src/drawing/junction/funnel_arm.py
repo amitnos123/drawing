@@ -41,7 +41,7 @@ class FunnelrArmConfig(BaseArmConfig):
 
     @gf.cell
     @staticmethod
-    def _build(
+    def funnelrArm(
         wide_length: float,
         wide_width: float,
         narrow_length: float,

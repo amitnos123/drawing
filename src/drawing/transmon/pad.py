@@ -19,7 +19,7 @@ class PadConfig(BaseConfig):
     model_config = ConfigDict(frozen=True)
 
     def build(self) -> gf.Component:
-        return PadConfig._build(
+        return PadConfig.pad(
             width=self.width,
             length=self.length,
             radius=self.radius,
@@ -30,7 +30,7 @@ class PadConfig(BaseConfig):
 
     @staticmethod
     @gf.cell
-    def _build(
+    def pad(
         width: float,
         length: float,
         radius: float,

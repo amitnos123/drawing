@@ -1,6 +1,5 @@
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict
 import gdsfactory as gf
-from pyparsing import cached_property
 from .shared import DEFAULT_LAYER
 class BaseConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

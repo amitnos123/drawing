@@ -29,7 +29,7 @@ class RegularArmConfig(BaseArmConfig):
         return hash((self.length, self.width, self.layer))
 
     def build(self) -> gf.Component:
-        return RegularArmConfig._build(
+        return RegularArmConfig.regularArm(
         self.length, 
         self.width, 
         self.layer, 
@@ -40,7 +40,7 @@ class RegularArmConfig(BaseArmConfig):
     
     @gf.cell
     @staticmethod
-    def _build(length: float, width: float, layer, connect_port_name: str, gap_port_name: str) -> gf.Component:
+    def regularArm(length: float, width: float, layer, connect_port_name: str, gap_port_name: str) -> gf.Component:
         c = gf.Component()
         c.add_polygon([(0, 0), (length, 0), (length, width), (0, width)], layer=layer)
         c.add_port(name=connect_port_name, center=(length, width / 2), width=width, orientation=0, layer=layer, port_type="electrical")

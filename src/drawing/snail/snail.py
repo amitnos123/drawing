@@ -33,7 +33,7 @@ class SnailConfig(BaseConfig):
     model_config = ConfigDict(frozen=True)
 
     def build(self) -> gf.Component:
-        return SnailConfig._build(
+        return SnailConfig.snail(
             flux_hole_width=self.flux_hole_width,
             flux_hole_bar_length=self.flux_hole_bar_length,
 
@@ -60,7 +60,7 @@ class SnailConfig(BaseConfig):
 
     @gf.cell
     @staticmethod
-    def _build(
+    def snail(
         flux_hole_width: float,
         flux_hole_bar_length: float,
         top_left_junction: gf.Component,

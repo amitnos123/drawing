@@ -38,7 +38,7 @@ class AntennaConfig(BaseConfig):
 
     @staticmethod
     @gf.cell
-    def _build(
+    def antenna(
         length: float,
         width: float,
         radius: float,

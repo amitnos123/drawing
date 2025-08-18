@@ -29,7 +29,7 @@ class SymmetricJunctionConfig(BaseJunctionConfig):
         return self.RIGHT_PREFIX + self.arm.CONNECTION_PORT_NAME
 
     def build(self) -> gf.Component:
-        return SymmetricJunctionConfig._build(
+        return SymmetricJunctionConfig.symmetricJunction(
             arm=self.arm.build().copy(),
             arm_gap_port_name=self.arm.GAP_PORT_NAME,
             gap_length=self.gap_length,
@@ -42,7 +42,7 @@ class SymmetricJunctionConfig(BaseJunctionConfig):
     
     @staticmethod
     @gf.cell
-    def _build(arm: gf.Component, arm_gap_port_name: str, gap_length: float, layer, gap_layer, gap_create: bool, right_prefix: str, left_prefix: str) -> gf.Component:
+    def symmetricJunction(arm: gf.Component, arm_gap_port_name: str, gap_length: float, layer, gap_layer, gap_create: bool, right_prefix: str, left_prefix: str) -> gf.Component:
         c = gf.Component()
 
         arm.layer = layer
