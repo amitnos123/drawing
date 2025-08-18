@@ -28,7 +28,7 @@ class AntennaConfig(BaseConfig):
     model_config = ConfigDict(frozen=True)
 
     def build(self) -> gf.Component:
-        return AntennaConfig._build(
+        return AntennaConfig.antenna(
             length=self.length,
             width=self.width,
             radius=self.radius,

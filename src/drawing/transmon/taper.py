@@ -17,7 +17,7 @@ class TaperConfig(BaseConfig):
     model_config = ConfigDict(frozen=True)
 
     def build(self) -> gf.Component:
-        return TaperConfig._build(
+        return TaperConfig.taper(
             length=self.length,
             wide_width=self.wide_width,
             narrow_width=self.narrow_width,
@@ -28,7 +28,7 @@ class TaperConfig(BaseConfig):
 
     @staticmethod
     @gf.cell
-    def _build(
+    def taper(
         length: float,
         wide_width: float,
         narrow_width: float,
