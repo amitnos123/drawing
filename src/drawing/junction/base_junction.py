@@ -1,4 +1,4 @@
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
@@ -15,8 +15,8 @@ class BaseJunctionConfig(BaseConfig):
     gap_layer: gf.typings.LayerSpec = (1,11)
     gap_create: bool = True
 
-    LEFT_PREFIX: str = "left_"
-    RIGHT_PREFIX: str = "right_"
+    LEFT_PREFIX: str = Field("left_", exclude=True)
+    RIGHT_PREFIX: str = Field("right_", exclude=True)
 
     model_config = ConfigDict(frozen=True)
     

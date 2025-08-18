@@ -5,7 +5,7 @@ from ..shared import smooth_corners, merge_referenced_shapes
 from typing import TypeVar, Type
 import matplotlib.pyplot as plt
 from typing_extensions import Self
-from pydantic import ConfigDict, model_validator
+from pydantic import ConfigDict, Field, model_validator
 from pydantic import computed_field
 from pyparsing import cached_property
 from ..base_config import BaseConfig
@@ -52,7 +52,7 @@ class TransmonConfig(BaseConfig):
     taper: TaperConfig = TaperConfig()
     junction: BaseJunctionConfig = SymmetricJunctionConfig(layer=(11,11))
     antenna: AntennaConfig = AntennaConfig()
-    validate_assignment: bool = False
+    validate_assignment: bool = Field(False, exclude=True)
 
     juction_taper_overlap: float = 3
 

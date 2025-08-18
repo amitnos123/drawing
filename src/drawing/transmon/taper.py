@@ -1,4 +1,4 @@
-from pydantic import ConfigDict, computed_field
+from pydantic import ConfigDict, Field, computed_field
 from pyparsing import cached_property
 from ..base_config import BaseConfig
 import gdsfactory as gf
@@ -11,8 +11,8 @@ class TaperConfig(BaseConfig):
     wide_width: float = 5
     narrow_width: float = 1
 
-    WIDE_CONNECTING_PORT_NAME: str = "wide_connection"
-    NARROW_CONNECTING_PORT_NAME: str = "narrow_connection"
+    WIDE_CONNECTING_PORT_NAME: str = Field("wide_connection", exclude=True)
+    NARROW_CONNECTING_PORT_NAME: str = Field("narrow_connection", exclude=True)
 
     model_config = ConfigDict(frozen=True)
 

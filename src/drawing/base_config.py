@@ -31,3 +31,5 @@ class BaseConfig(BaseModel):
     def validate(self) -> None:
         pass
     
+    def to_json(self) -> str:
+        return self.model_dump()

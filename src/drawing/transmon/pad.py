@@ -1,5 +1,4 @@
-from pydantic import ConfigDict, computed_field
-from pyparsing import cached_property
+from pydantic import ConfigDict, Field
 from ..base_config import BaseConfig
 import gdsfactory as gf
 from ..shared import smooth_corners
@@ -14,8 +13,8 @@ class PadConfig(BaseConfig):
     length: float = 20
     radius: float = 5
 
-    LEFT_CONNECTING_PORT_NAME: str = "left_connection"
-    RIGHT_CONNECTING_PORT_NAME: str = "right_connection"
+    LEFT_CONNECTING_PORT_NAME: str = Field("left_connection", exclude=True)
+    RIGHT_CONNECTING_PORT_NAME: str =  Field("right_connection", exclude=True)
 
     model_config = ConfigDict(frozen=True)
 

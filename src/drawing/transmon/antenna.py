@@ -1,8 +1,7 @@
 from ..shared import merge_decorator
 import gdsfactory.components as gc
 import gdsfactory as gf
-from pydantic import ConfigDict, computed_field
-from pyparsing import cached_property
+from pydantic import ConfigDict, Field
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
@@ -24,7 +23,7 @@ class AntennaConfig(BaseConfig):
     width: float = 10
     radius: float = 25
     
-    ANTENNA_START_PORT: str = 'start'
+    ANTENNA_START_PORT: str = Field('start', exclude=True)
 
     model_config = ConfigDict(frozen=True)
 
