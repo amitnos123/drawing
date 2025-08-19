@@ -3,6 +3,13 @@ import gdsfactory as gf
 from .base_cut_indicator import BaseCutIndicatorConfig
 
 class UniformCutIndicatorConfig(BaseCutIndicatorConfig):
+    """Configuration for a uniform cut indicator.
+
+    Attributes:
+        floors (int): Number of floors/steps in the indicator.
+        last_floor_length (float): Length of the last floor/step.
+        layer (LayerSpec): Layer specification for the junction component.
+    """
     floors: int = 6
     last_floor_length: float = 50
 
