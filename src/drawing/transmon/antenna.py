@@ -1,4 +1,3 @@
-from ..shared import merge_decorator
 import gdsfactory.components as gc
 import gdsfactory as gf
 from pydantic import ConfigDict, Field
@@ -49,25 +48,26 @@ class AntennaConfig(BaseConfig):
 
         # Rectangular pad (compass shape)
         compass = gc.compass(size=(length, width), layer=layer)
-        circle = gc.circle(radius=radius, layer=layer)
+        circle = gc.circle(radius=radius, layer=layer).copy()
+
+        circle.add_port(
+            name="center",
+            center=circle.center,
+            width=width,
+            orientation=180,
+            layer=layer
+        )
 
         compass_ref = c.add_ref(compass)
         circle_ref = c.add_ref(circle)
 
-        # Create a fake port at the center of the circle to connect to the compass
-        circle_port = gf.Port(
-            name="circle_port",
-            center=circle_ref.center,
-            layer=layer[0],
-            width=width,
-            orientation=180,
-        )
-
         # Connect the circle to the east port of the compass (e3)
-        compass_ref.connect("e3", circle_port, allow_type_mismatch=True)
+        compass_ref.connect("e3", circle_ref.ports["center"], allow_type_mismatch=True, allow_width_mismatch=True)
 
         # Add main antenna port at the west end of the compass (e1)
         c.add_port(start_port_name, port=compass_ref.ports["e1"])
+
+        c.flatten()
 
         return c
 
