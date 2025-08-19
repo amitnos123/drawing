@@ -1,9 +1,9 @@
+from drawing.shared.utilities import JUNCTION_PICTURE_LAYER
 import gdsfactory as gf
 from .base_junction import BaseJunctionConfig
 from .base_arm import BaseArmConfig
 from .regular_arm import RegularArmConfig
-from pydantic import ConfigDict, computed_field
-from functools import cached_property
+from pydantic import ConfigDict
 
 class SymmetricJunctionConfig(BaseJunctionConfig):
     """
