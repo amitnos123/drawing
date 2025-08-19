@@ -8,7 +8,7 @@ class WaferConfig(BaseConfig):
     safe_layer: gf.typings.LayerSpec | None = None
 
     def build(self) -> gf.Component:
-        return WaferConfig._build(
+        return WaferConfig.wafer(
             radius=self.radius,
             safe_radius=self.safe_radius,
             layer=self.layer,
@@ -17,7 +17,7 @@ class WaferConfig(BaseConfig):
 
     @staticmethod
     @gf.cell
-    def _build(
+    def wafer(
         radius: float,
         safe_radius: float,
         layer: gf.typings.LayerSpec,
