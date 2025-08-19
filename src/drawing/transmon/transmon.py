@@ -1,4 +1,5 @@
 from drawing.junction import BaseJunctionConfig, SymmetricJunctionConfig
+from drawing.shared.utilities import JUNCTION_PICTURE_LAYER
 import gdsfactory as gf
 import gdsfactory.components as gc
 from ..shared import smooth_corners, merge_referenced_shapes
@@ -56,6 +57,11 @@ class TransmonConfig(BaseConfig):
 
     juction_taper_overlap: float = 3
 
+    junction_box_image_add_top: float = 2
+    junction_box_image_add_bottom: float = 2
+    junction_box_image_add_left: float = 1
+    junction_box_image_add_right: float = 1
+
     model_config = ConfigDict(frozen=True)
 
     def build(self) -> gf.Component:
@@ -77,6 +83,11 @@ class TransmonConfig(BaseConfig):
             taper_wide_connecting_port=self.taper.WIDE_CONNECTING_PORT_NAME,
             taper_narrow_connecting_port=self.taper.NARROW_CONNECTING_PORT_NAME,
             antenna_start_port=self.antenna.ANTENNA_START_PORT,
+
+            junction_box_image_add_top=self.junction_box_image_add_top,
+            junction_box_image_add_bottom=self.junction_box_image_add_bottom,
+            junction_box_image_add_left=self.junction_box_image_add_left,
+            junction_box_image_add_right=self.junction_box_image_add_right
         )
 
     @gf.cell
@@ -96,7 +107,11 @@ class TransmonConfig(BaseConfig):
         taper_narrow_connecting_port: str,
         antenna_start_port: str ,
         taper_narrow_width: float,
-        pad_width: float
+        pad_width: float,
+        junction_box_image_add_top: float,
+        junction_box_image_add_bottom: float,
+        junction_box_image_add_left: float,
+        junction_box_image_add_right: float
     ) -> gf.Component:
         pt = gf.Component()
 
@@ -121,6 +136,8 @@ class TransmonConfig(BaseConfig):
         pt_left_ref = c << pt
 
         junction_ref = c << junction
+
+        c << gf.components.bbox(junction_ref, layer=JUNCTION_PICTURE_LAYER, top=junction_box_image_add_top, bottom=junction_box_image_add_bottom, right=junction_box_image_add_right, left=junction_box_image_add_left)
 
         pt_left_ref.connect("left_junction_connection", junction_ref.ports[junction_right_connecting_port], allow_layer_mismatch=True)
         pt_right_ref.connect("right_junction_connection", junction_ref.ports[junction_left_connecting_port], allow_layer_mismatch=True)
@@ -172,40 +189,6 @@ class TransmonConfig(BaseConfig):
         self.pad.validate()
         self.taper.validate()
         self.junction.validate()
-        # self.antenna.validate()
+        self.antenna.validate()
 
-        # # pad-taper validation
-        # #-------------------------------------------------------------------
-        # if self.pads_distance < self.taper.length * 2:
-        #     raise ValueError(
-        #         f"Pad distance {self.pad.distance} must be greater than the taper length (2x) {self.taper.length * 2} "
-        #     )
-        
-        # if self.pad.width < self.taper.narrow_width:
-        #     raise ValueError(
-        #         f"Pad width {self.pad.width} must be greater than the taper narrow width {self.taper.narrow_width}"
-        #     )
-        
-        # # taper-taper validation
-        # #-------------------------------------------------------------------
-        # if self.taper.wide_width < self.taper.narrow_width:
-        #     raise ValueError(
-        #         f"Taper wide width {self.taper.wide_width} must be greater than the taper narrow width {self.taper.narrow_width}"
-        #     )
-        
-
-        # # taper-junction validation
-        # #-------------------------------------------------------------------
-        # if self.taper.narrow_width < self.junction.width:
-        #     raise ValueError(
-        #         f"Taper narrow width {self.taper.narrow_width} must be greater than the junction width {self.junction.width}"
-        #     )
-        
-        # # pads-taper-junction validation
-        # #-------------------------------------------------------------------
-        # if self.pad.distance < self.junction.length + self.junction.gap + self.taper.length * 2:
-        #     raise ValueError(
-        #         f"Pad distance {self.pad.distance} must be greater than the junction length {self.junction.length} "
-        #         f"plus taper length (2x) {self.taper.length * 2}"
-        #     )
         return self
