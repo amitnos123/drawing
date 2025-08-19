@@ -128,15 +128,9 @@ class TransmonConfig(BaseConfig):
         pt_left_ref.movex(-juction_taper_overlap)
         pt_right_ref.movex(juction_taper_overlap)
 
-        print(antenna.xsize)
-        print(c.xsize)
         antenna_ref = c << antenna
-        print(antenna.xsize)
-        print(c.xsize)
 
         antenna_ref.connect(antenna_start_port, pt_right_ref.ports["antenna_connection"], allow_width_mismatch=True)
-        print(antenna.xsize)
-        print(c.xsize)
 
         return merge_referenced_shapes(c.mirror_x())
 
