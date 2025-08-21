@@ -1,8 +1,10 @@
+from drawing.shared.utilities import DEFAULT_WAFER_LAYER
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
 class WaferConfig(BaseConfig):
 
+    layer: gf.typings.LayerSpec = DEFAULT_WAFER_LAYER
     radius: float = 76200 # 3 inch in micro meter
     safe_radius: float = 71120 # 2.9 inch in micro meter
     safe_layer: gf.typings.LayerSpec | None = None

@@ -15,6 +15,7 @@ Coordinate = Tuple[float, float]
 Size = Tuple[float, float]
 
 DEFAULT_LAYER = (1, 0)
+DEFAULT_WAFER_LAYER = (60, 0)
 JUNCTION_FOCUS_LAYER = (33, 0)
 JUNCTION_PICTURE_LAYER = (50, 0)
 DEFAULT_NUM_POINTS = 300
