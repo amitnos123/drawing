@@ -28,6 +28,12 @@ class SymmetricJunctionConfig(BaseJunctionConfig):
     def RIGHT_CONNECTING_PORT_NAME(self) -> str:
         return self.RIGHT_PREFIX + self.arm.CONNECTION_PORT_NAME
 
+    def get_left_arm_config(self) -> BaseArmConfig:
+        return self.arm
+
+    def get_right_arm_config(self) -> BaseArmConfig:
+        return self.arm
+
     def build(self) -> gf.Component:
         return SymmetricJunctionConfig.symmetricJunction(
             arm=self.arm.build().copy(),

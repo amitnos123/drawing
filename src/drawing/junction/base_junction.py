@@ -1,6 +1,10 @@
+from drawing.junction.base_arm import BaseArmConfig
 from pydantic import ConfigDict, Field
+from pyparsing import Literal
 from ..base_config import BaseConfig
 import gdsfactory as gf
+
+type junctionTypeEnum = Literal["DOLAN", "DOLATHAN", "MANHANTAN"]
 
 class BaseJunctionConfig(BaseConfig):
     """
@@ -15,6 +19,8 @@ class BaseJunctionConfig(BaseConfig):
     gap_layer: gf.typings.LayerSpec = (1,11)
     gap_create: bool = True
 
+    junction_type: junctionTypeEnum = "DOLAN"
+
     LEFT_PREFIX: str = Field("left_", exclude=True)
     RIGHT_PREFIX: str = Field("right_", exclude=True)
 
@@ -25,6 +31,12 @@ class BaseJunctionConfig(BaseConfig):
         Returns the total length of the junction.
         This method should be implemented by subclasses.
         """
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def get_left_arm_config(self) -> BaseArmConfig:
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def get_right_arm_config(self) -> BaseArmConfig:
         raise NotImplementedError("Subclasses should implement this method.")
 
     def validate(self) -> None:
