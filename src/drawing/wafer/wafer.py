@@ -45,7 +45,7 @@ class WaferConfig(BaseConfig):
         samplesJJData = []
         for s in self.samples:
              for sJJ in s.get_jopherson_junctions():
-                data = []
+                data = {}
                 data["type"] = sJJ.junction_type
                 data["gap"] = sJJ.gap_length
                 samplesJJData.append(data)
