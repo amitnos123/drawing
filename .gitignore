@@ -6,37 +6,4 @@ src/drawing/transmon/junctions/__pycache__/*
 
 gds_files/*
 
-# Ignore Python files in the root directory
-#*.py
-src/drawing/wafer/__pycache__/wafer.cpython-313.pyc
-src/drawing/junction/__pycache__/__init__.cpython-313.pyc
-src/drawing/junction/__pycache__/antisymmetric_junction.cpython-313.pyc
-src/drawing/junction/__pycache__/base_arm.cpython-313.pyc
-src/drawing/junction/__pycache__/base_junction.cpython-313.pyc
-src/drawing/junction/__pycache__/funnel_arm.cpython-313.pyc
-src/drawing/junction/__pycache__/regular_arm.cpython-313.pyc
-src/drawing/junction/__pycache__/symmetric_junction.cpython-313.pyc
-src/drawing/junction/__pycache__/t_arm.cpython-313.pyc
-src/drawing/snail/__pycache__/snail.cpython-313.pyc
-src/drawing/squid/__pycache__/squid.cpython-313.pyc
-src/drawing/junction/__pycache__/__init__.cpython-313.pyc
-src/drawing/junction/__pycache__/antisymmetric_junction.cpython-313.pyc
-src/drawing/junction/__pycache__/base_arm.cpython-313.pyc
-src/drawing/junction/__pycache__/base_junction.cpython-313.pyc
-src/drawing/junction/__pycache__/funnel_arm.cpython-313.pyc
-src/drawing/junction/__pycache__/regular_arm.cpython-313.pyc
-src/drawing/junction/__pycache__/symmetric_junction.cpython-313.pyc
-src/drawing/meander/__pycache__/__init__.cpython-313.pyc
-src/drawing/meander/__pycache__/euler.cpython-313.pyc
-src/drawing/sample/__pycache__/__init__.cpython-313.pyc
-src/drawing/sample/__pycache__/base_sample.cpython-313.pyc
-src/drawing/sample/__pycache__/two_resonators_two_transmon_sample.cpython-313.pyc
-src/drawing/snail/__pycache__/snail.cpython-313.pyc
-src/drawing/squid/__pycache__/squid.cpython-313.pyc
-src/drawing/test_junctions/__pycache__/__init__.cpython-313.pyc
-src/drawing/test_junctions/__pycache__/base_test_junctions.cpython-313.pyc
-src/drawing/test_junctions/__pycache__/five_test_junctions.cpython-313.pyc
-src/drawing/wafer/__pycache__/__init__.cpython-313.pyc
-src/drawing/wafer/__pycache__/base_cut_indicator.cpython-313.pyc
-src/drawing/wafer/__pycache__/uniform_cut_indicator.cpython-313.pyc
-src/drawing/wafer/__pycache__/wafer_regular_split.cpython-313.pyc
+*.pyc 
