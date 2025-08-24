@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_serializer
 import gdsfactory as gf
 from .shared import DEFAULT_LAYER
 class BaseConfig(BaseModel):
@@ -31,4 +31,8 @@ class BaseConfig(BaseModel):
         pass
     
     def to_json(self) -> str:
-        return self.model_dump()
+        return self.model_dump_json()
+    
+    @field_serializer("layer")
+    def serialize_layer(self, layer: gf.typings.LayerSpec, _info):
+        return str(layer)
