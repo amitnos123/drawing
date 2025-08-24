@@ -1,4 +1,9 @@
+import json
+from drawing.sample.base_sample import BaseSampleConfig
+from drawing.test_junctions.base_test_junctions import BaseTestJunctionsConfig
 from drawing.shared.utilities import DEFAULT_WAFER_LAYER
+
+from create_directory import create_design_json
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
@@ -8,6 +13,9 @@ class WaferConfig(BaseConfig):
     radius: float = 76200 # 3 inch in micro meter
     safe_radius: float = 71120 # 2.9 inch in micro meter
     safe_layer: gf.typings.LayerSpec | None = None
+
+    samples: list[BaseSampleConfig] = []
+    testJunctions: list[BaseTestJunctionsConfig] = []
 
     def build(self) -> gf.Component:
         return WaferConfig.wafer(
@@ -33,6 +41,32 @@ class WaferConfig(BaseConfig):
 
         return c
     
+    def create_design_json(self, name: str,  material: str,  thickness: float, recipe: str) -> str:
+        samplesJJData = []
+        for s in self.samples:
+             for sJJ in s.get_jopherson_junctions():
+                data = []
+                data["type"] = sJJ.junction_type
+                data["gap"] = sJJ.gap_length
+                samplesJJData.append(data)
+
+        testJunctionsData = []
+        for tJ in self.testJunctions:
+            testJunctionsData.append(tJ.getData())
+
+        return create_design_json(
+            wafer_name=name,
+            wafer_material=material,
+            wafer_size=self.radius,
+            wafer_thickness=thickness,
+            recipe=recipe,
+            sample_names=[],
+            sample_dimension="sample_dimension",
+            sample_center="sample_center",
+            sample_jopherson_junctions=samplesJJData,
+            test_junctions=testJunctionsData
+        )
+
     def validate(self) -> None:
         if self.radius < 0:
             raise ValueError(
