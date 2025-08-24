@@ -7,3 +7,4 @@ src/drawing/transmon/junctions/__pycache__/*
 gds_files/*
 
 *.pyc 
+test.py
