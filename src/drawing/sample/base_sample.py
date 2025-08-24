@@ -1,3 +1,4 @@
+from drawing.junction.base_junction import BaseJunctionConfig
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
@@ -16,3 +17,6 @@ class BaseSampleConfig(BaseConfig):
         c = gf.Component()
 
         return c
+    
+    def get_jopherson_junctions(self) -> list[BaseJunctionConfig]:
+        return []
