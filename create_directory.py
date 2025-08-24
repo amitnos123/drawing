@@ -29,7 +29,7 @@ def create_design_json(wafer_name: str,
                        sample_dimension: str,
                        sample_center: str,
                        sample_jopherson_junctions: list,
-                       test_junctions: list
+                       test_junctions: dict
                        ) -> str:
         # Json to have:
         # wafer name
@@ -51,7 +51,7 @@ def create_design_json(wafer_name: str,
         #    BRIDGE START GAP
         #    BRIDGE END GAP
         #    FINGER WIDTH
-    rtn: list = []
+    rtn: dict = {}
     rtn['wafer name'] = wafer_name
     rtn['material'] = wafer_material
     rtn['size'] = wafer_size
@@ -62,5 +62,5 @@ def create_design_json(wafer_name: str,
     rtn['sample center'] = sample_center
     rtn['sample jopherson junctions'] = sample_jopherson_junctions
     rtn['test junctions'] = test_junctions
-    
+
     return json.dumps(rtn)
