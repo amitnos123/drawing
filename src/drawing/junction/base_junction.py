@@ -1,10 +1,10 @@
 from drawing.junction.base_arm import BaseArmConfig
 from pydantic import ConfigDict, Field
-from pyparsing import Literal
 from ..base_config import BaseConfig
 import gdsfactory as gf
+from typing import Literal
 
-type junctionTypeEnum = Literal["DOLAN", "DOLATHAN", "MANHANTAN"]
+junctionTypeEnum = Literal["DOLAN", "DOLATHAN", "MANHANTAN"]
 
 class BaseJunctionConfig(BaseConfig):
     """
