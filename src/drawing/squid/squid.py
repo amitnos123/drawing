@@ -1,9 +1,7 @@
 from drawing.base_config import BaseConfig
 import gdsfactory as gf
 from ..junction import BaseJunctionConfig, SymmetricJunctionConfig
-from pydantic import ConfigDict, model_validator
-from pydantic import computed_field
-from pyparsing import cached_property
+from pydantic import ConfigDict
 
 class SquidConfig(BaseConfig):
     """Configuration for a squid component.
@@ -98,6 +96,9 @@ class SquidConfig(BaseConfig):
         c.flatten()
 
         return c
+
+    def get_jopherson_junctions(self) -> list[BaseJunctionConfig]:
+        return [self.top_junction, self.bottom_junction]
 
     def validate(self) -> None:
         super().validate()

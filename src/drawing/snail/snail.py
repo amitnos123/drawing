@@ -125,6 +125,9 @@ class SnailConfig(BaseConfig):
 
         return c
 
+    def get_jopherson_junctions(self) -> list[BaseJunctionConfig]:
+        return [self.top_left_junction, self.top_middle_junction, self.top_right_junction, self.bottom_junction]
+
     @staticmethod
     def bottom_junction_length_arm_length(left_junction: BaseJunctionConfig = SymmetricJunctionConfig(), middle_junction: BaseJunctionConfig = SymmetricJunctionConfig(), right_junction: BaseJunctionConfig = SymmetricJunctionConfig(), bottom_gap: float = 1) -> float:
         """Calculates the length of the bottom junction arm.
