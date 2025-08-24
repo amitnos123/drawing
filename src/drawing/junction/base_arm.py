@@ -1,5 +1,4 @@
-from pydantic import ConfigDict, computed_field
-from pyparsing import cached_property
+from pydantic import Field
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
@@ -10,8 +9,8 @@ class BaseArmConfig(BaseConfig):
         layer (LayerSpec): Layer specification for the junction component.
     """
 
-    CONNECTION_PORT_NAME: str = "connection"
-    GAP_PORT_NAME: str = "gap"
+    CONNECTION_PORT_NAME: str = Field("connection", exclude=True)
+    GAP_PORT_NAME: str = Field("gap", exclude=True)
     
     def __eq__(self, other):
         if not isinstance(other, BaseArmConfig):
@@ -23,9 +22,6 @@ class BaseArmConfig(BaseConfig):
         # same fields as __eq__
         return hash((self.layer))
 
-    @computed_field
-    @cached_property
-    @gf.cell
     def build(self) -> gf.Component:
         raise NotImplementedError("Subclasses should implement this method.")
 
