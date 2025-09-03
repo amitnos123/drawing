@@ -1,21 +1,41 @@
 ### SquidConfig
 ```python
-    flux_hole_length: float = 15
+class SquidConfig(BaseConfig):
     flux_hole_width: float = 5
-    outer_length: float = 20
-    outer_width: float = 10
-    junction_gap_length: float = 2
+    flux_hole_length: float = 10
+
+    flux_hole_bar_length: float = 5
+
+    top_junction: BaseJunctionConfig = SymmetricJunctionConfig()
+    bottom_junction: BaseJunctionConfig = SymmetricJunctionConfig()
+
     layer: LayerSpec = DEFAULT_LAYER
-    bridges_layer: LayerSpec | None = None
+
+    LEFT_CONNECTING_PORT_NAME: str = "left_connection"
+    RIGHT_CONNECTING_PORT_NAME: str = "right_connection"
 ```
 
 Configuration for a squid component.
 
+Constants:
+* LEFT_CONNECTING_PORT_NAME (str):
+* RIGHT_CONNECTING_PORT_NAME (str):
+
 Attributes:
 *  flux_hole_width (float): Width of the flux hole.
 *  flux_hole_length (float): Length of the flux hole.
-*  outer_length (float): Length of the outer rectangle.
-*  outer_width (float): Width of the outer rectangle.
-*  junction_gap_length (float): Length of the gap between junctions.
+*  flux_hole_bar_length (float): Length of the flux hole bar.
+*  top_junction (BaseJunctionConfig): Configuration for the top junction.
+*  bottom_junction (BaseJunctionConfig): Configuration for the bottom junction.
 *  layer (LayerSpec): Layer specification for the squid component.
-*  bridges_layer (LayerSpec | None): Optional layer specification for the bridges over the gap.
+
+```python
+def build(self) -> gf.Component
+```
+Creates a Squid component.
+The function uses @gf.cell, then the component is cached and named. 
+
+```python
+def get_jopherson_junctions(self) -> list[BaseJunctionConfig]
+```
+Returns a list of the junctions
