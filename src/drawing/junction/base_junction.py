@@ -10,6 +10,7 @@ class BaseJunctionConfig(BaseConfig):
     """
     Base configuration for junction components.
     Attributes:
+        gap_length (float): Length of the gap.
         layer (LayerSpec): Layer specification for the junction component.
         gap_layer (LayerSpec): Layer specification for the gap.
         gap_create (bool): Whether to create a gap in the junction.

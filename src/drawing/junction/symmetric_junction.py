@@ -7,7 +7,7 @@ from pydantic import ConfigDict
 
 class SymmetricJunctionConfig(BaseJunctionConfig):
     """
-    Base configuration for symmetric junction components.
+    Configuration for symmetric junction components.
     Attributes:
         arm (BaseArmConfig): Configuration for the arm component.
         gap_length (float): Length of the gap between the arms.
