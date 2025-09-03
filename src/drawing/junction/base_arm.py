@@ -4,9 +4,9 @@ import gdsfactory as gf
 
 class BaseArmConfig(BaseConfig):
     """
-    Base configuration for junction components.
+    Base configuration for arm components.
     Attributes:
-        layer (LayerSpec): Layer specification for the junction component.
+        layer (LayerSpec): Layer specification for the arm component.
     """
 
     CONNECTION_PORT_NAME: str = Field("connection", exclude=True)

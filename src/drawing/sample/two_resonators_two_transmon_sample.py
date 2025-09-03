@@ -1,18 +1,26 @@
 from drawing.junction.base_junction import BaseJunctionConfig
 from drawing.meander.euler import meander_euler
-from drawing.resonator.base_resonator import BaseResonator
-from drawing.resonator.meander_resonator import MeanderResonator
+from drawing.resonator.base_resonator import BaseResonatorConfig
+from drawing.resonator.meander_resonator import MeanderResonatorConfig
 from drawing.transmon.transmon import TransmonConfig
 from .base_sample import BaseSampleConfig
 import gdsfactory as gf
 
 class twoResonatorsTwoTransmonSampleConfig(BaseSampleConfig):
+    """
+    Configuration for a sample with two resonators and two transmons.
+    Attributes:
+        transmon (TransmonConfig): Configuration for the transmon.
+        transmonAntenna (TransmonConfig): Configuration for the transmon antenna.
+        ResonatorLeft (BaseResonatorConfig): Configuration for the left resonator.
+        ResonatorRight (BaseResonatorConfig): Configuration for the right resonator.
+    """
 
     transmon : TransmonConfig = TransmonConfig()
     transmonAntenna : TransmonConfig = TransmonConfig()
 
-    ResonatorLeft : BaseResonator = MeanderResonator()
-    ResonatorRight : BaseResonator = MeanderResonator()
+    ResonatorLeft : BaseResonatorConfig = MeanderResonatorConfig()
+    ResonatorRight : BaseResonatorConfig = MeanderResonatorConfig()
 
     def build(self) -> gf.Component:
         return twoResonatorsTwoTransmonSampleConfig.twoResonatorsTwoTransmonSample(

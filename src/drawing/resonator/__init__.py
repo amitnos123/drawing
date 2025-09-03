@@ -1,2 +1,2 @@
-from .base_resonator import BaseResonator
-from .meander_resonator import MeanderResonator
+from .base_resonator import BaseResonatorConfig
+from .meander_resonator import MeanderResonatorConfig

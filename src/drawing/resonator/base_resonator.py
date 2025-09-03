@@ -2,8 +2,11 @@
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
-class BaseResonator(BaseConfig):
+class BaseResonatorConfig(BaseConfig):
     """
+    Base configuration for resonator components.
+    Attributes:
+        layer (LayerSpec): Layer specification for the resonator component.
     """
     
     def build(self) -> gf.Component:

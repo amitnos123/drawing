@@ -5,6 +5,14 @@ from ..base_config import BaseConfig
 import gdsfactory as gf
 
 class BaseSampleConfig(BaseConfig):
+    """
+    Base configuration for sample components.
+    Attributes:
+        layer (LayerSpec): Layer specification for the sample.
+        length (float): Length of the sample area.
+        width (float): Width of the sample area.
+        layer_area_indicator (LayerSpec): Layer specification for the area indicator.
+    """
     length: float = 0
     width: float = 0
     
