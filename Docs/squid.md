@@ -1,4 +1,4 @@
-### SquidConfig
+## SquidConfig
 ```python
 class SquidConfig(BaseConfig):
     flux_hole_width: float = 5
@@ -17,11 +17,7 @@ class SquidConfig(BaseConfig):
 
 Configuration for a squid component.
 
-Constants:
-* LEFT_CONNECTING_PORT_NAME (str):
-* RIGHT_CONNECTING_PORT_NAME (str):
-
-Attributes:
+### Attributes:
 *  flux_hole_width (float): Width of the flux hole.
 *  flux_hole_length (float): Length of the flux hole.
 *  flux_hole_bar_length (float): Length of the flux hole bar.
@@ -29,6 +25,11 @@ Attributes:
 *  bottom_junction (BaseJunctionConfig): Configuration for the bottom junction.
 *  layer (LayerSpec): Layer specification for the squid component.
 
+### Constants:
+* LEFT_CONNECTING_PORT_NAME (str):
+* RIGHT_CONNECTING_PORT_NAME (str):
+
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```

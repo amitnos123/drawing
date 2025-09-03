@@ -1,4 +1,4 @@
-### BaseArmConfig
+# BaseArmConfig
 ```python
     CONNECTION_PORT_NAME: str = Field("connection", exclude=True)
     GAP_PORT_NAME: str = Field("gap", exclude=True)
@@ -6,13 +6,14 @@
 
 Base configuration for a junctions' arm component.
 
-Attributes:
+### Attributes:
 *  layer (LayerSpec): Layer specification for the arm component.
 
-Constants:
+### Constants:
 * CONNECTION_PORT_NAME (str):
 * GAP_PORT_NAME (str):
 
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```
@@ -23,7 +24,7 @@ def total_length(self) -> float
 ```
 Abstract method
 
-### RegularArmConfig
+## RegularArmConfig
 ```python
     length: float = 10.0
     width: float = 1.0
@@ -31,15 +32,16 @@ Abstract method
 
 Configuration for a rectangular arm component.
 
-Attributes:
+### Attributes:
 *  length (float): Length of the arm.
 *  width (float): Width of the arm.
 *  layer (LayerSpec): Layer specification for the arm component.
 
-Constants:
+### Constants:
 * CONNECTION_PORT_NAME (str):
 * GAP_PORT_NAME (str):
 
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```
@@ -51,7 +53,7 @@ def total_length(self) -> float
 ```
 Returns the total length of the arm.
 
-### FunnelrArmConfig
+## FunnelrArmConfig
 ```python
     wide_length: float = 10.0
     wide_width: float = 5.0
@@ -61,17 +63,18 @@ Returns the total length of the arm.
 
 Configuration for a funnel arm component.
 
-Attributes:
+### Attributes:
 *  wide_length (float): Length of the wide part of the funnel.
 *  wide_width (float): Width of the wide part of the funnel.
 *  narrow_length (float): Length of the narrow part of the funnel.
 *  narrow_width (float): Width of the narrow part of the funnel.
 *  layer (LayerSpec): Layer specification for the arm component.
 
-Constants:
+### Constants:
 * CONNECTION_PORT_NAME (str):
 * GAP_PORT_NAME (str):
 
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```
@@ -83,7 +86,7 @@ def total_length(self) -> float
 ```
 Returns the total length of the arm.
 
-### TArmConfig
+## TArmConfig
 ```python
     wide_length: float = 10.0
     wide_width: float = 5.0
@@ -93,17 +96,18 @@ Returns the total length of the arm.
 
 Configuration for a T arm component.
 
-Attributes:
+### Attributes:
 *  horizontal_length (float): Length of the horizontal section of the T-arm.
 *  horizontal_width (float): Width of the horizontal section of the T-arm.
 *  vertical_length (float): Length of the vertical section of the T-arm.
 *  vertical_width (float): Width of the vertical section of the T-arm.
 *  layer (LayerSpec): Layer specification for the arm component.
 
-Constants:
+### Constants:
 * CONNECTION_PORT_NAME (str):
 * GAP_PORT_NAME (str):
 
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```
@@ -116,7 +120,7 @@ def total_length(self) -> float
 Returns the total length of the arm.
 
 
-### BaseJunctionConfig
+# BaseJunctionConfig
 ```python
     gap_length: float = 1.0
     gap_layer: gf.typings.LayerSpec = (1,11)
@@ -130,17 +134,18 @@ Returns the total length of the arm.
 
 Base configuration for a junctions' arm component.
 
-Attributes:
+### Attributes:
 *  gap_length (float): Length of the gap.
 *  gap_layer (LayerSpec): Layer specification for the gap.
 *  gap_create (bool): Whether to create a gap in the junction.
 *  junction_type (junctionTypeEnum): The type of junction
 *  layer (LayerSpec): Layer specification for the arm component.
 
-Constants:
+### Constants:
 * LEFT_PREFIX (str):
 * RIGHT_PREFIX (str):
 
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```
@@ -161,14 +166,14 @@ def get_right_arm_config(self) -> BaseArmConfig
 ```
 Abstract method
 
-### SymmetricJunctionConfig
+## SymmetricJunctionConfig
 ```python
     arm: BaseArmConfig = RegularArmConfig()
 ```
 
 Configuration for symmetric junction component.
 
-Attributes:
+### Attributes:
 *  arm (BaseArmConfig): Configuration for the arm component.
 *  gap_length (float): Length of the gap.
 *  gap_layer (LayerSpec): Layer specification for the gap.
@@ -176,12 +181,13 @@ Attributes:
 *  junction_type (junctionTypeEnum): The type of junction
 *  layer (LayerSpec): Layer specification for the arm component.
 
-Constants:
+### Constants:
 * LEFT_PREFIX (str):
 * RIGHT_PREFIX (str):
 * LEFT_CONNECTING_PORT_NAME (str):
 * RIGHT_CONNECTING_PORT_NAME (str):
 
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```
@@ -203,14 +209,14 @@ def get_right_arm_config(self) -> BaseArmConfig
 ```
 Return the armConfig of the right arm
 
-### AntisymmetricJunctionConfig
+## AntisymmetricJunctionConfig
 ```python
     arm: BaseArmConfig = RegularArmConfig()
 ```
 
 Configuration for antisymmetric junction component.
 
-Attributes:
+### Attributes:
 *  arm (BaseArmConfig): Configuration for the arm component.
 *  gap_length (float): Length of the gap.
 *  gap_layer (LayerSpec): Layer specification for the gap.
@@ -218,12 +224,13 @@ Attributes:
 *  junction_type (junctionTypeEnum): The type of junction
 *  layer (LayerSpec): Layer specification for the arm component.
 
-Constants:
+### Constants:
 * LEFT_PREFIX (str):
 * RIGHT_PREFIX (str):
 * LEFT_CONNECTING_PORT_NAME (str):
 * RIGHT_CONNECTING_PORT_NAME (str):
 
+### Methods:
 ```python
 def build(self) -> gf.Component
 ```
