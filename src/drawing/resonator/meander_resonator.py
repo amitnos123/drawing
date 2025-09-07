@@ -1,8 +1,8 @@
 
-from drawing.resonator.base_resonator import BaseResonator
+from drawing.resonator.base_resonator import BaseResonatorConfig
 import gdsfactory as gf
 
-class MeanderResonatorConfig(BaseResonator):
+class MeanderResonatorConfig(BaseResonatorConfig):
     """
     Configuration for a meander resonator component.
     Attributes:
@@ -15,7 +15,7 @@ class MeanderResonatorConfig(BaseResonator):
     @staticmethod
     @gf.cell
     def meanderResonator() -> gf.Component:
-        c = gf.Component
+        c = gf.Component()
         return c
     
     def validate(self) -> None:
