@@ -1,3 +1,4 @@
+import datetime
 import json
 from drawing.sample.base_sample import BaseSampleConfig
 from drawing.test_junctions.base_test_junctions import BaseTestJunctionsConfig
@@ -16,6 +17,8 @@ class WaferConfig(BaseConfig):
 
     samples: list[BaseSampleConfig] = []
     testJunctions: list[BaseTestJunctionsConfig] = []
+
+    wafer_design: str = ""
 
     def build(self) -> gf.Component:
         return WaferConfig.wafer(
@@ -41,31 +44,28 @@ class WaferConfig(BaseConfig):
 
         return c
     
-    def create_design_json(self, name: str,  material: str,  thickness: float, recipe: str) -> str:
-        samplesJJData = []
+    def create_design_json(self,  material: str,  thickness: float, recipe: str) -> str:
+        dataSamples = []
         for s in self.samples:
-             for sJJ in s.get_jopherson_junctions():
-                data = {}
-                data["type"] = sJJ.junction_type
-                data["gap"] = sJJ.gap_length
-                samplesJJData.append(data)
+            dataSamples.append(s.getData())
 
         testJunctionsData = []
         for tJ in self.testJunctions:
             testJunctionsData.append(tJ.getData())
-
+            
         return create_design_json(
-            wafer_name=name,
+            wafer_name=self.get_wafer_name(),
             wafer_material=material,
             wafer_size=self.radius,
             wafer_thickness=thickness,
             recipe=recipe,
-            sample_names=[],
-            sample_dimension="sample_dimension",
-            sample_center="sample_center",
-            sample_jopherson_junctions=samplesJJData,
+            samples=dataSamples,
             test_junctions=testJunctionsData
         )
+    
+    def get_wafer_name(self) -> str:
+        x = datetime.datetime.now()
+        return x.strftime("%Y") + x.strftime("%m") + x.strftime("%d") + "_" + self.wafer_design
 
     def validate(self) -> None:
         if self.radius < 0:
