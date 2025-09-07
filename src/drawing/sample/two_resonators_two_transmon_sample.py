@@ -62,3 +62,6 @@ class twoResonatorsTwoTransmonSampleConfig(BaseSampleConfig):
 
     def get_jopherson_junctions(self) -> list[BaseJunctionConfig]:
         return [self.transmon.junction, self.transmonAntenna.junction]
+
+    def get_resistance_measurement_points(self) -> list[tuple[float, float]]:
+        return [(0, 0), (1, 1)]
