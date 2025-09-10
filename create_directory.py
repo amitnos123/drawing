@@ -116,7 +116,7 @@ def create_wafer_dir(gds: gf.Component, dir_name: str, design_json: str) -> None
     design_dir_path.mkdir(parents=True, exist_ok=True)
     print(f"Nested directories '{design_dir_path}' created successfully.")
 
-    gds.write_gds(design_dir_path.joinpath("testing.gds"), with_metadata=False)
+    gds.write_gds(design_dir_path.joinpath(dir_name + ".gds"), with_metadata=False)
 
     with design_dir_path.joinpath("data.json").open("w", encoding ="utf-8") as f:
         f.write(design_json)
@@ -132,10 +132,12 @@ def create_wafer_dir(gds: gf.Component, dir_name: str, design_json: str) -> None
         for rmp in sample["resistance measurement points"]:
             rCsv += f"{sample_name},{rmp['name']},\n"
 
-    print(rCsv)
-
     with resistance_dir_path.joinpath("resistance.csv").open("w", encoding ="utf-8") as f:
         f.write(rCsv)
+
+    rTJCsv: str = "Sample,Point,Resistance (Ohm)\n"
+    with resistance_dir_path.joinpath("resistance_test_junctions.csv").open("w", encoding ="utf-8") as f:
+        f.write(rTJCsv)
 
 def create_design_json(wafer_name: str,
                        wafer_material: str,
@@ -145,28 +147,19 @@ def create_design_json(wafer_name: str,
                        samples: list,
                        test_junctions: dict
                        ) -> str:
-        # Json to have:
-        # wafer name
-        # material 
-        # size
-        # thickness
-        # recipe
-        # samples:
-        #   name
-        #   dimension
-        #   center
-        #   jopherson junctions:
-        #       jj_N style
-        #       jj_N width
-        #       jj_N gap
-        # test junctions:
-        #   type:
-        #       DOLAN
-        #       DOLATHAN
-        #       MANHANTAN
-        #    BRIDGE START GAP
-        #    BRIDGE END GAP
-        #    FINGER WIDTH
+    """
+    Creates a design JSON string for wafer configuration.
+    Args:
+        wafer_name (str): The name of the wafer.
+        wafer_material (str): The material of the wafer.
+        wafer_size (float): The size of the wafer in micrometers.
+        wafer_thickness (str): The thickness of the wafer in micrometers.
+        recipe (str): The fabrication recipe.
+        samples (list): A list of sample configurations.
+        test_junctions (dict): A dictionary of test junction configurations.
+    Returns:
+        str: A JSON string representing the wafer design.
+    """
     rtn: dict = {}
     rtn['wafer name'] = wafer_name
     rtn['material'] = wafer_material
