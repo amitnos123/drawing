@@ -5,9 +5,12 @@ from ..shared import smooth_corners
 
 class PadConfig(BaseConfig):
     """
-
+    Pad configuration for creating rectangular pads with optional corner rounding.
     Attributes:
         layer (LayerSpec): GDS layer specification.
+        width (float): Width of the pad in micrometers.
+        length (float): Length of the pad in micrometers.
+        radius (float): Radius for corner rounding in micrometers.
     """
     width: float = 50
     length: float = 20

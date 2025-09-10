@@ -3,6 +3,16 @@ from . wafer import WaferConfig
 import gdsfactory as gf
 
 class WaferRegularSplitConfig(WaferConfig):
+    """
+    WaferRegularSplit configuration for creating a circular wafer layout with regular splits.
+    Attributes:
+        split_layer (LayerSpec): GDS layer specification for the split lines.
+        vertical_split_length_in_raduis (float): Length of the vertical split as a fraction of the wafer radius.
+        vertical_split_y_position_in_raduis (float): Y position of the vertical split as a fraction of the wafer radius.
+        horizontal_split_length_in_raduis (float): Length of the horizontal split as a fraction of the wafer radius.
+        horizontal_split_y_position_in_raduis (float): Y position of the horizontal split as a fraction of the wafer radius.
+        horizontal_split_x_position_in_raduis (float): X position of the horizontal split as a fraction of the wafer radius.
+    """
 
     split_layer: gf.typings.LayerSpec = DEFAULT_LAYER
     vertical_split_length_in_raduis: float = 0.3

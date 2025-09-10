@@ -9,6 +9,17 @@ from ..base_config import BaseConfig
 import gdsfactory as gf
 
 class WaferConfig(BaseConfig):
+    """
+    Wafer configuration for creating a circular wafer layout with optional safe area.
+    Attributes:
+        layer (LayerSpec): GDS layer specification.
+        radius (float): Radius of the wafer in micrometers.
+        safe_radius (float): Radius of the safe area in micrometers.
+        safe_layer (LayerSpec, optional): GDS layer specification for the safe area.
+        samples (list[BaseSampleConfig]): List of sample configurations to be included on the wafer.
+        testJunctions (list[BaseTestJunctionsConfig]): List of test junction configurations to be included on the wafer.
+        wafer_design (str): Design identifier for the wafer, used in naming.
+    """
 
     layer: gf.typings.LayerSpec = DEFAULT_WAFER_LAYER
     radius: float = 76200 # 3 inch in micro meter

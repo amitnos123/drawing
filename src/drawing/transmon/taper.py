@@ -1,11 +1,16 @@
-from pydantic import ConfigDict, Field, computed_field
-from pyparsing import cached_property
+from pydantic import ConfigDict, Field
 from ..base_config import BaseConfig
 import gdsfactory as gf
 
 
 class TaperConfig(BaseConfig):
     """
+    Taper configuration for creating a linear taper between two widths over a specified length.
+    Attributes:
+        layer (LayerSpec): GDS layer specification.
+        length (float): Length of the taper in micrometers.
+        wide_width (float): Width of the wide end of the taper in micrometers.
+        narrow_width (float): Width of the narrow end of the taper in micrometers.
     """
     length: float = 10
     wide_width: float = 5

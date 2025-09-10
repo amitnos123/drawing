@@ -47,6 +47,20 @@ def create_nested_from_flat_by_prefix(prefixes: list[str], d: dict):
 
 class TransmonConfig(BaseConfig):
     """
+    Transmon configuration for creating a transmon qubit layout.
+    Attributes:
+        integration_config: Configuration for integration features.
+        pad: Configuration for the pad component.
+        taper: Configuration for the taper component.
+        junction: Configuration for the junction component.
+        antenna: Configuration for the antenna component.
+        validate_assignment: Flag to enable or disable validation on assignment.
+        juction_taper_overlap: Overlap distance between the junction and taper in micrometers.
+        junction_box_image_add_top: Additional space above the junction box image in micrometers.
+        junction_box_image_add_bottom: Additional space below the junction box image in micrometers.
+        junction_box_image_add_left: Additional space to the left of the junction box image in micrometers.
+        junction_box_image_add_right: Additional space to the right of the junction box image in micrometers.
+        layer: GDS layer specification for the transmon layout.
     """
     integration_config: IntegrationConfig = IntegrationConfig()
     pad: PadConfig = PadConfig()
